@@ -1,15 +1,99 @@
 :root { font-family: system-ui, "Noto Sans TC", sans-serif; }
+* { box-sizing: border-box; }
 body { margin: 0; background:#0b0f14; color:#e8eef6; }
-.bar { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#0f1620; border-bottom:1px solid #1f2a36; position:sticky; top:0; z-index:10; }
-.title { font-weight:700; }
-.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px; padding:12px; }
-.card { background:#0f1620; border:1px solid #1f2a36; border-radius:12px; padding:12px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
-button { background:#1b6ef3; border:none; color:white; padding:8px 10px; border-radius:10px; cursor:pointer; }
+
+.bar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  background:#0f1620;
+  border-bottom:1px solid #1f2a36;
+  position:sticky;
+  top:0;
+  z-index:10;
+  gap:10px;
+}
+
+.title { font-weight:700; font-size:14px; line-height:1.2; }
+.grid {
+  display:grid;
+  gap:12px;
+  padding:12px;
+  padding-left: calc(12px + env(safe-area-inset-left));
+  padding-right: calc(12px + env(safe-area-inset-right));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+/* Mobile-first: single column */
+.grid { grid-template-columns: 1fr; }
+
+/* Tablet */
+@media (min-width: 720px) {
+  .title { font-size:16px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Desktop */
+@media (min-width: 1100px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.card {
+  background:#0f1620;
+  border:1px solid #1f2a36;
+  border-radius:14px;
+  padding:12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  min-width: 0;
+}
+
+h2 { margin: 0 0 10px 0; font-size:16px; }
+
+button {
+  background:#1b6ef3;
+  border:none;
+  color:white;
+  padding:10px 12px;
+  border-radius:12px;
+  cursor:pointer;
+  touch-action: manipulation;
+}
 button:disabled { opacity:.5; cursor:not-allowed; }
-.small { font-size:12px; opacity:.8; line-height:1.5; }
+
+.small { font-size:12px; opacity:.85; line-height:1.55; }
 .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .chk { display:flex; gap:8px; align-items:center; }
-.pill { display:inline-flex; gap:6px; padding:4px 8px; background:#111c29; border:1px solid #1f2a36; border-radius:999px; }
+
+.pill {
+  display:inline-flex;
+  gap:6px;
+  padding:5px 10px;
+  background:#111c29;
+  border:1px solid #1f2a36;
+  border-radius:999px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 hr { border:none; border-top:1px solid #1f2a36; margin:10px 0; }
-input { background:#0b0f14; border:1px solid #1f2a36; color:#e8eef6; padding:8px 10px; border-radius:10px; outline:none; }
+
+input {
+  background:#0b0f14;
+  border:1px solid #1f2a36;
+  color:#e8eef6;
+  padding:10px 12px;
+  border-radius:12px;
+  outline:none;
+  width: min(320px, 100%);
+}
+
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+/* Make long logs wrap nicely on small screens */
+#battleLog { white-space: pre-wrap; word-break: break-word; }

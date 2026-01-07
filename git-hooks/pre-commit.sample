@@ -1,0 +1,6 @@
+#!/bin/sh
+# Pre-commit hook sample: auto bump version before each commit.
+# 1) copy to .git/hooks/pre-commit
+# 2) chmod +x .git/hooks/pre-commit
+python bump_version.py
+git add VERSION.txt data/version.js README.md

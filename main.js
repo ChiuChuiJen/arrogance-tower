@@ -1,3 +1,4 @@
+import { APP_VERSION } from "./data/version.js";
 import { Floors } from "./data/floors.js";
 import { Monsters } from "./data/monsters.js";
 import { Items } from "./data/items.js";
@@ -42,6 +43,8 @@ function fmtTime(ts){
 }
 
 function render() {
+  const vEl = document.getElementById("versionTag");
+  if (vEl) vEl.textContent = APP_VERSION;
   $("playerQuick").innerHTML = S
     ? `<span class="pill">會員：${S.memberId}</span>
        <span class="pill">暱稱：${S.nickname}</span>

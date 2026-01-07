@@ -1,3 +1,5 @@
+版本：v0.0.1-test
+
 # 傲慢之塔 Web（GitHub Pages）
 
 這是一個可直接部署到 GitHub Pages 的網頁式遊戲 MVP（Vanilla JS、無需打包）。
@@ -16,3 +18,13 @@
 3. 取得網址即可遊玩
 
 生成時間：2026-01-07 00:18:43
+
+
+## 介面
+- 手機/電腦自適應（Responsive）
+- Header 顯示版本號
+
+## 版本號
+- 目前從測試版 v0.0.1-test 開始
+- 每次修改可執行：`python bump_version.py` 自動 +1（patch）
+- 也可用提供的 git pre-commit hook 範例做到每次 commit 自動加版號
