@@ -218,35 +218,24 @@ function render() {
   };
 
   // Floors list
-  const floorsEl = document.getElementById("floors");
-  if (floorsEl) {
-    const unlocked = Floors.filter(f => f.id <= S.unlockedFloor);
-    floorsEl.innerHTML = unlocked.map(f => `
-      <button class="btn ${((S.currentFloor ?? 1)===f.id) ? "primary" : ""}" data-floor="${f.id}">
-        ${escapeHtml(f.name)}
-      </button>
-    `).join("");
+  $("floors").innerHTML = Floors.map(f => {
+    const locked = f.id > S.unlockedFloor;
+    const active = f.id === (S.currentFloor ?? 1);
+    return `<div class="row" style="margin:6px 0;">
+      <span class="pill">${active ? "▶" : ""}${f.name}</span>
+      <span class="pill">屬性：${f.element}</span>
+      <button ${locked ? "disabled" : ""} data-floor="${f.id}">進入</button>
+    </div>`;
+  }).join("");
 
-    floorsEl.querySelectorAll("button[data-floor]").forEach(btn => {
-      btn.onclick = () => {
-        const fid = Number(btn.dataset.floor);
-        S.currentFloor = fid;
-        pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
-        saveGame(S);
-        render();
-      };
-    });
-  }
-
-  renderStela();
-      renderHistory();
-      renderPlayerDetails();
-      hookBreakthrough();
-    };
-    if (hint) hint.textContent = `已解鎖至第 ${S.unlockedFloor} 層。`;
-  }
-
-  renderStela();
+  [...$("floors").querySelectorAll("button[data-floor]")].forEach(btn => {
+    btn.onclick = () => {
+      const fid = Number(btn.dataset.floor);
+      S.currentFloor = fid;
+      pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
+      saveGame(S);
+      renderHunt();
+      renderStela();
       renderHistory();
     };
   });
@@ -534,7 +523,6 @@ function hookBreakthrough(){
 
 function encodeB64(obj){
   const json = JSON.stringify(obj);
-  // UTF-8 safe base64
   const bytes = new TextEncoder().encode(json);
   let bin = "";
   bytes.forEach(b => bin += String.fromCharCode(b));
@@ -607,13 +595,12 @@ function setupSettings(){
   if (btnImport) btnImport.onclick = () => {
     try{
       const obj = decodeB64(ta.value || "");
-      // Basic validation
-      if (!obj || !obj.memberId || !obj.nickname) throw new Error("存檔格式不正確");
+      if (!obj || !obj.memberId || !obj.nickname) throw new Error("bad");
       saveGame(obj);
       S = obj;
       msg.textContent = "匯入成功，已套用存檔。";
       render();
-    } catch (err){
+    } catch {
       msg.textContent = "匯入失敗：Base64 或 JSON 格式不正確。";
     }
   };

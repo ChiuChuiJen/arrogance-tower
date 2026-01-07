@@ -1,4 +1,4 @@
-版本：v0.0.6-test
+版本：v0.0.4-test
 
 # 傲慢之塔 Web（GitHub Pages）
 
