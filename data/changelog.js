@@ -1,5 +1,13 @@
 export const CHANGELOG = [
   {
+    "version": "v0.0.4-test",
+    "date": "2026-01-07",
+    "changes": [
+      "修正狩獵/歷練區塊重複 id 造成的互動失效問題",
+      "狩獵/歷練顯示統一放在「樓層」分頁內"
+    ]
+  },
+  {
     "version": "v0.0.3-test",
     "date": "2026-01-07",
     "changes": [
