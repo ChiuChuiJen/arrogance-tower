@@ -1,144 +1,124 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f1620" />
-  <title>傲慢之塔 Web</title>
-  <link rel="stylesheet" href="./style.css" />
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="#0f1620" name="theme-color"/>
+<title>傲慢之塔 Web</title>
+<link href="./style.css" rel="stylesheet"/>
 </head>
 <body>
-  <header class="bar">
-    <div style="width:56px;"></div>
-    <div class="titleWrap">
-      <div class="title">傲慢之塔</div>
-      <div class="ver" id="topVer"></div>
-    </div>
-    <div class="row" style="justify-content:flex-end;">
-      <button id="openSettings" class="iconbtn" title="設定">⚙</button>
-    </div>
-  </header>
-
-  <div class="wrap">
-  <main class="grid">
-    <section class="card">
-      <h2>角色</h2>
-
-      <div class="tabs">
-        <button class="tab active" data-tab="role">角色資訊</button>
-        <button class="tab" data-tab="bag">百納袋</button>
-        <button class="tab" data-tab="floors">樓層</button>
-      </div>
-
-      <div class="panel" data-panel="role">
-        <div id="auth"></div>
-
-        <div class="row" style="margin-top:8px;">
-          <label class="chk">
-            <input id="badge" type="checkbox" />
+<header class="bar">
+<div style="width:56px;"></div>
+<div class="titleWrap">
+<div class="title">傲慢之塔</div>
+<div class="ver" id="topVer"></div>
+</div>
+<div class="row" style="justify-content:flex-end;"><span id="versionTag">v0.1.1-test</span>
+<button class="iconbtn" id="openSettings" title="設定">⚙</button>
+</div>
+</header><div class="row" id="playerQuick" style="gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+<div class="wrap">
+<main class="grid">
+<section class="card">
+<h2>角色</h2>
+<div class="tabs">
+<button class="tab active" data-tab="role">角色資訊</button>
+<button class="tab" data-tab="bag">百納袋</button>
+<button class="tab" data-tab="floors">樓層</button>
+</div>
+<div class="panel" data-panel="role">
+<div id="auth"></div>
+<div class="row" style="margin-top:8px;">
+<label class="chk">
+<input id="badge" type="checkbox"/>
             配戴「百納袋胸章」
           </label>
-        </div>
-        <div class="small">未配戴者：擊殺不會獲得任何掉落（Canon）</div>
-
-        <hr/>
-        <div id="playerDetails"></div>
-        <hr/>
-        <div id="versionInfo" class="small"></div>
-      </div>
-
-      <div class="panel hidden" data-panel="bag">
-        <div id="bag"></div>
-      </div>
-
-      <div class="panel hidden" data-panel="floors">
-        <div id="floors"></div>
-        <hr/>
-        <h3 class="sub">通天碑</h3>
-        <div id="stela"></div>
-        <hr/>
-        <h3 class="sub">探索</h3>
-        <div id="hunt"></div>
-      
-      <div class="panel hidden" data-panel="shop">
-        <div class="row" style="justify-content:space-between; align-items:center;">
-          <div class="pill">雜貨店</div>
-          <div class="small">金幣：<span id="shopGold"></span></div>
-        </div>
-        <div id="shop" style="margin-top:10px;"></div>
-        <div class="small" style="margin-top:8px; opacity:.85;">可購買：基本丹藥、基本武器、防具</div>
-      </div>
-
 </div>
-    </section>
+<div class="small">未配戴者：擊殺不會獲得任何掉落（Canon）</div>
+<hr/>
+<div id="playerDetails"></div>
+<hr/>
+<div class="small" id="versionInfo"></div>
+</div>
+<div class="panel hidden" data-panel="bag">
+<div id="bag"></div>
+</div>
+<div class="panel hidden" data-panel="floors"><select id="floorSelect" style="width:100%;"></select><div class="small" id="floorHint" style="margin-top:6px; opacity:.85;"></div>
+<div id="floors"></div>
+<hr/>
+<h3 class="sub">通天碑</h3>
+<div id="stela"></div>
+<hr/>
+<h3 class="sub">探索</h3>
+<div id="hunt"></div>
+<div class="panel hidden" data-panel="shop">
+<div class="row" style="justify-content:space-between; align-items:center;">
+<div class="pill">雜貨店</div>
+<div class="small">金幣：<span id="shopGold"></span></div>
+</div>
+<div id="shop" style="margin-top:10px;"></div>
+<div class="small" style="margin-top:8px; opacity:.85;">可購買：基本丹藥、基本武器、防具</div>
+</div>
+<div id="encounter" style="margin-top:10px;"></div><div class="small" id="battleLog" style="margin-top:8px; white-space:pre-wrap;"></div></div>
+</section>
 <section class="card">
-      <h2>歷程</h2>
-      <div id="history"></div>
-    </section>
+<h2>歷程</h2>
+<div id="history"></div>
+</section>
 </main>
 </div>
-
-  <script type="module" src="./main.js"></script>
-
-  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="設定">
-    <div class="modalCard">
-      <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">設定</h2>
-        <button id="settingsClose" class="iconbtn" title="關閉">✕</button>
-      </div>
-
-      <div class="small" style="margin-top:8px;">
+<script src="./main.js" type="module"></script>
+<div aria-label="設定" aria-modal="true" class="modal hidden" id="settingsModal" role="dialog">
+<div class="modalCard">
+<div class="row" style="justify-content:space-between; align-items:center;">
+<h2 style="margin:0;">設定</h2>
+<button class="iconbtn" id="settingsClose" title="關閉">✕</button>
+</div>
+<div class="small" style="margin-top:8px;">
         匯出/匯入「存檔 JSON」的 Base64 代碼（會覆蓋目前存檔 localStorage）。
       </div>
-
-      <hr/>
-      <div class="small">Base64 代碼</div>
-      <textarea id="saveCode" class="textarea" rows="6" placeholder="貼上 Base64 代碼…"></textarea>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="btnExport">匯出 Base64</button>
-        <button id="btnCopy" style="background:#334155;">複製</button>
-        <button id="btnImport" style="background:#16a34a;">匯入 Base64</button>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="btnDownloadJson" style="background:#0ea5e9;">下載 JSON</button>
-        <label class="iconbtn" style="padding:8px 12px; border-radius:12px;">
+<hr/>
+<div class="small">Base64 代碼</div>
+<textarea class="textarea" id="saveCode" placeholder="貼上 Base64 代碼…" rows="6"></textarea>
+<div class="row" style="margin-top:10px;">
+<button id="btnExport">匯出 Base64</button>
+<button id="btnCopy" style="background:#334155;">複製</button>
+<button id="btnImport" style="background:#16a34a;">匯入 Base64</button>
+</div>
+<div class="row" style="margin-top:10px;">
+<button id="btnDownloadJson" style="background:#0ea5e9;">下載 JSON</button>
+<label class="iconbtn" style="padding:8px 12px; border-radius:12px;">
           上傳 JSON
-          <input id="fileJson" type="file" accept="application/json" style="display:none;" />
-        </label>
-      </div>
-
-      <div id="settingsMsg" class="small" style="margin-top:10px; opacity:.9;"></div>
-    </div>
-  </div>
-
-
-  <div id="updatesModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="更新內容">
-    <div class="modalCard">
-      <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">更新內容</h2>
-        <button id="updatesClose" class="iconbtn" title="關閉">✕</button>
-      </div>
-      <div id="updatesBody" class="small" style="margin-top:10px;"></div>
-    </div>
-  </div>
-
-
-  <div id="battleModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="戰鬥">
-    <div class="modalCard">
-      <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">戰鬥</h2>
-        <button id="battleClose" class="iconbtn" title="關閉">✕</button>
-      </div>
-      <div id="battleBody" class="small" style="margin-top:10px;"></div>
-      <div class="row" style="margin-top:12px;">
-        <button id="battleFight" style="background:#ef4444;">開始戰鬥</button>
-        <button id="battleFlee" style="background:#334155;">撤退</button>
-      </div>
-      <div id="battleMsg" class="small" style="margin-top:10px; opacity:.9;"></div>
-    </div>
-  </div>
-
+          <input accept="application/json" id="fileJson" style="display:none;" type="file"/>
+</label>
+</div>
+<div class="small" id="settingsMsg" style="margin-top:10px; opacity:.9;"></div>
+</div>
+</div>
+<div aria-label="更新內容" aria-modal="true" class="modal hidden" id="updatesModal" role="dialog">
+<div class="modalCard">
+<div class="row" style="justify-content:space-between; align-items:center;">
+<h2 style="margin:0;">更新內容</h2>
+<button class="iconbtn" id="updatesClose" title="關閉">✕</button>
+</div>
+<div class="small" id="updatesBody" style="margin-top:10px;"></div>
+</div>
+</div>
+<div aria-label="戰鬥" aria-modal="true" class="modal hidden" id="battleModal" role="dialog">
+<div class="modalCard">
+<div class="row" style="justify-content:space-between; align-items:center;">
+<h2 style="margin:0;">戰鬥</h2>
+<button class="iconbtn" id="battleClose" title="關閉">✕</button>
+</div>
+<div class="small" id="battleBody" style="margin-top:10px;"></div>
+<div class="row" style="margin-top:12px;">
+<button id="battleFight" style="background:#ef4444;">開始戰鬥</button>
+<button id="battleFlee" style="background:#334155;">撤退</button>
+</div>
+<div class="small" id="battleMsg" style="margin-top:10px; opacity:.9;"></div>
+</div>
+</div>
 </body>
 </html>
