@@ -1,18 +1,11 @@
 export const CHANGELOG = [
   {
-    "version": "v0.0.4-test",
+    "version": "v0.0.3-test",
     "date": "2026-01-07",
     "changes": [
       "樓層移至角色分頁：與百納袋並列（新增「樓層」分頁）",
       "新增設定齒輪：匯入/匯出 Base64（JSON 存檔）與下載/上傳 JSON",
       "角色資訊下方顯示版本資訊與更動內容"
-    ]
-  },
-  {
-    "version": "v0.0.3-test",
-    "date": "2026-01-07",
-    "changes": [
-      "加入修為(EXP)條與突破按鈕（境界/層級）"
     ]
   },
   {
