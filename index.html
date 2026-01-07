@@ -24,6 +24,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="role">角色資訊</button>
         <button class="tab" data-tab="bag">百納袋</button>
+        <button class="tab" data-tab="floors">樓層</button>
       </div>
 
       <div class="panel" data-panel="role">
@@ -46,20 +47,15 @@
       <div class="panel hidden" data-panel="bag">
         <div id="bag"></div>
       </div>
-    </section>
 
-    <section class="card">
-      <h2>樓層</h2>
-      <div class="row"><select id="floorSelect" class="select"></select></div>
-      <div class="small" id="floorHint"></div>
-      <hr/>
-      <h3 class="sub">歷練</h3>
-      <div id="hunt"></div>
-      <hr/>
-      <div id="stela"></div>
+      <div class="panel hidden" data-panel="floors">
+        <div id="floors"></div>
+        <hr/>
+        <h3 class="sub">歷練</h3>
+        <div id="hunt"></div>
+      </div>
     </section>
-
-    <section class="card">
+<section class="card">
       <h2>狩獵</h2>
       <div id="hunt"></div>
     </section>

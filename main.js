@@ -155,8 +155,7 @@ function render() {
       </div>
       <div class="small">存檔在本機 localStorage（GitHub Pages 可用）</div>
     `;
-    const sel0 = document.getElementById("floorSelect"); if (sel0) sel0.innerHTML = "";
-    const hint0 = document.getElementById("floorHint"); if (hint0) hint0.textContent = "";
+    $("floors").innerHTML = "";
     $("stela").innerHTML = "";
     $("hunt").innerHTML = "";
     $("bag").innerHTML = "";
@@ -218,20 +217,28 @@ function render() {
     render();
   };
 
-  // Floors (dropdown)
-  const sel = document.getElementById("floorSelect");
-  const hint = document.getElementById("floorHint");
-  if (sel) {
+  // Floors list
+  const floorsEl = document.getElementById("floors");
+  if (floorsEl) {
     const unlocked = Floors.filter(f => f.id <= S.unlockedFloor);
-    sel.innerHTML = unlocked.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
-    sel.value = String(S.currentFloor ?? 1);
-    sel.onchange = () => {
-      const fid = Number(sel.value);
-      S.currentFloor = fid;
-      pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
-      saveGame(S);
-      renderHunt();
-      renderStela();
+    floorsEl.innerHTML = unlocked.map(f => `
+      <button class="btn ${((S.currentFloor ?? 1)===f.id) ? "primary" : ""}" data-floor="${f.id}">
+        ${escapeHtml(f.name)}
+      </button>
+    `).join("");
+
+    floorsEl.querySelectorAll("button[data-floor]").forEach(btn => {
+      btn.onclick = () => {
+        const fid = Number(btn.dataset.floor);
+        S.currentFloor = fid;
+        pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
+        saveGame(S);
+        render();
+      };
+    });
+  }
+
+  renderStela();
       renderHistory();
       renderPlayerDetails();
       hookBreakthrough();
