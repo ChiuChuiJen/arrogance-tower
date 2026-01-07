@@ -19,9 +19,12 @@ function syncRealmTier(){
   S.realm = REALMS[Math.max(0, Math.min(REALMS.length-1, ri))];
   S.tier = TIER_NAMES[Math.max(1, Math.min(10, tn)) - 1];
 }
-function exeNeedFor(ri, tn){
+function exeNeedFor(ri, tn, floorId=1){
   const base = 100;
-  return Math.floor(base * (1 + ri*0.70) * (1 + (tn-1)*0.22));
+  const realmFactor = (1 + ri*0.70);
+  const tierFactor = (1 + (tn-1)*0.22);
+  const floorFactor = (1 + Math.max(0, (floorId-1))*0.03); // 高樓層需求略升
+  return Math.floor(base * realmFactor * tierFactor * floorFactor);
 }
 
 function itemName(id){ return Items[id]?.name ?? id; }
@@ -220,13 +223,14 @@ function render() {
     sel.onchange = () => {
       const fid = Number(sel.value);
       S.currentFloor = fid;
+      S.exeNeed = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1, fid);
       pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
       saveGame(S);
       renderStela();
       renderHunt();
       renderHistory();
       renderPlayerDetails();
-  hookExeBreakthrough();
+      hookExeBreakthrough();
       renderExeInfo();
       hookBreakthrough?.();
     };
@@ -234,16 +238,13 @@ function render() {
   }
 
   renderStela();
-      renderHistory();
-    };
-  });
 
   renderStela();
   renderHunt();
   renderBag();
   renderHistory();
   renderPlayerDetails();
-  hookExeBreakthrough();
+      hookExeBreakthrough();
   setupTabs();
   renderVersionInfo();
   setupSettings();
@@ -400,9 +401,15 @@ function doFight(monsterId) {
     return;
   }
 
-  // 勝利：修為值(EXE)
-  const exeGain = ({ "一般": 8, "菁英": 18, "Mini Boss": 35, "Boss": 60 }[m.rarity] ?? 6) + Math.floor(Math.random()*4);
+  // 勝利：修為值(EXE)（依境界/樓層/怪物難度動態）
+  const baseExe = ({ "一般": 8, "菁英": 18, "Mini Boss": 35, "Boss": 60 }[m.rarity] ?? 6);
+  const floorId = S.currentFloor ?? 1;
+  const floorBonus = 1 + Math.max(0, floorId-1) * 0.06; // 高樓層掉更多
+  const realmBonus = 1 + (S.realmIndex ?? 0) * 0.08;   // 境界越高，戰鬥效率略升（掉落略升）
+  const diffBonus = 1 + Math.max(0, (m.level ?? 1) - (S.level ?? 1)) * 0.03; // 打更強怪略多
+  const exeGain = Math.floor((baseExe * floorBonus * realmBonus * diffBonus) + Math.random()*4);
   S.exe = (S.exe ?? 0) + exeGain;
+  S.exeNeed = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1, floorId);
   
   // 勝利：掉落
   const drop = rollDrops({ floorId: S.currentFloor, rarity: m.rarity, badgeOn: S.badgeOn });
@@ -512,15 +519,46 @@ function downloadText(filename, text){
 function renderVersionInfo(){
   const el = document.getElementById("versionInfo");
   if (!el) return;
-  const items = (CHANGELOG ?? []).slice(-6).reverse();
-  const html = items.map(x => {
+  const items = (CHANGELOG ?? []).slice().reverse(); // oldest -> newest
+  const newest = items.slice(-3).reverse();          // newest 3
+  const older = items.slice(0, Math.max(0, items.length-3)).reverse(); // remaining newest-first
+
+  const block = (x) => {
     const lines = (x.changes ?? []).map(c => `• ${escapeHtml(c)}`).join("<br/>");
     return `<div style="margin:8px 0;">
       <div class="mono" style="opacity:.9;">${escapeHtml(x.version)} <span style="opacity:.7;">(${escapeHtml(x.date)})</span></div>
       <div>${lines}</div>
     </div>`;
-  }).join("");
-  el.innerHTML = `<div class="mono">版本：${escapeHtml(APP_VERSION)}</div>` + (html ? `<div style="margin-top:6px;">更動內容：</div>${html}` : "");
+  };
+
+  const newestHtml = newest.map(block).join("");
+  const iconHtml = (older.length > 0)
+    ? `<span id="updatesBtn" class="updateIcon" title="查看完整更新">🛈</span>`
+    : "";
+
+  el.innerHTML =
+    `<div class="row" style="align-items:center; justify-content:space-between;">
+       <div class="mono">版本：${escapeHtml(APP_VERSION)}</div>
+       <div>${iconHtml}</div>
+     </div>` +
+    `<div style="margin-top:6px;">更動內容（最新 3 筆）：</div>` +
+    (newestHtml || "<div class='small'>（無）</div>");
+
+  // Modal wiring for older items
+  const m = document.getElementById("updatesModal");
+  const close = document.getElementById("updatesClose");
+  const body = document.getElementById("updatesBody");
+  const btn = document.getElementById("updatesBtn");
+
+  const open = () => { if (!m) return; m.classList.remove("hidden"); };
+  const shut = () => { if (!m) return; m.classList.add("hidden"); };
+
+  if (btn && body) {
+    body.innerHTML = `<div style="margin-bottom:6px;">完整更新（含較舊版本）：</div>` + older.map(block).join("");
+    btn.onclick = open;
+  }
+  if (close) close.onclick = shut;
+  if (m) m.onclick = (e) => { if (e.target === m) shut(); };
 }
 function setupSettings(){
   const modal = document.getElementById("settingsModal");
@@ -604,7 +642,7 @@ function hookExeBreakthrough(){
   if (!btn) return;
   btn.onclick = () => {
     if (!S) return;
-    const need = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1);
+    const need = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1, S.currentFloor ?? 1);
     if ((S.exe ?? 0) < need) return;
 
     S.exe -= need;
@@ -624,7 +662,7 @@ function hookExeBreakthrough(){
       S.mp = S.maxMp;
     }
 
-    S.exeNeed = exeNeedFor(S.realmIndex, S.tierNum);
+    S.exeNeed = exeNeedFor(S.realmIndex, S.tierNum, S.currentFloor ?? 1);
     saveGame(S);
     render();
   };

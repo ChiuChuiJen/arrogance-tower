@@ -182,3 +182,17 @@ select.select{
   width: 100%;
   max-width: 420px;
 }
+
+.updateIcon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:12px;
+  border:1px solid #1f2a36;
+  background:#111c29;
+  cursor:pointer;
+  margin-left:8px;
+}
+.updateIcon:hover{ filter:brightness(1.1); }

@@ -1,5 +1,22 @@
 export const CHANGELOG = [
   {
+    "version": "v0.0.8-test",
+    "date": "2026-01-07",
+    "changes": [
+      "修正 main.js 語法錯誤（Unexpected token '}'）導致頁面無法載入",
+      "修正樓層下拉選單切換事件的殘留程式片段"
+    ]
+  },
+  {
+    "version": "v0.0.7-test",
+    "date": "2026-01-07",
+    "changes": [
+      "EXE 需求值改為與境界/層級/樓層動態掛鉤",
+      "EXE 掉落量改為與樓層/怪物難度/境界動態掛鉤",
+      "版本更新資訊只顯示最新 3 筆，其餘改用更新圖示彈窗顯示"
+    ]
+  },
+  {
     "version": "v0.0.6-test",
     "date": "2026-01-07",
     "changes": [
