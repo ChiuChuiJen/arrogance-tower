@@ -28,6 +28,68 @@ function exeNeedFor(ri, tn, floorId=1){
   return Math.floor(base * realmFactor * tierFactor * floorFactor);
 }
 
+const SHOP_ITEMS = [
+  { id:"pill_hp_s", type:"consumable", name:"小回氣丹", desc:"回復 HP +30", price: 25, use: (S)=>{ S.hp = Math.min((S.maxHp ?? S.hp ?? 120), (S.hp ?? 0) + 30); } },
+  { id:"pill_mp_s", type:"consumable", name:"小回靈丹", desc:"回復 MP +20", price: 25, use: (S)=>{ S.mp = Math.min((S.maxMp ?? S.mp ?? 60), (S.mp ?? 0) + 20); } },
+  { id:"pill_sta_s", type:"consumable", name:"回體丹", desc:"體力 +1（上限 10）", price: 40, use: (S)=>{ S.stamina = Math.min(10, (S.stamina ?? 0) + 1); } },
+
+  { id:"w_basic_sword", type:"weapon", name:"新手短劍", desc:"ATK +4", price: 120, bonus:{ atk:4 } },
+  { id:"w_basic_staff", type:"weapon", name:"新手法杖", desc:"INT +4", price: 120, bonus:{ int:4 } },
+
+  { id:"a_basic_cloth", type:"armor", name:"新手布甲", desc:"DEF +4", price: 120, bonus:{ def:4 } },
+  { id:"a_basic_boots", type:"armor", name:"新手輕靴", desc:"AGI +3", price: 120, bonus:{ agi:3 } },
+];
+
+function getEquipBonus(){
+  const out = { atk:0, def:0, agi:0, int:0, luk:0, hp:0, mp:0 };
+  const apply = (it)=>{ if(!it||!it.bonus) return; for(const k in it.bonus){ out[k]=(out[k]??0)+it.bonus[k]; } };
+  const w = S.weapon ? SHOP_ITEMS.find(x=>x.id===S.weapon) : null;
+  const a = S.armor ? SHOP_ITEMS.find(x=>x.id===S.armor) : null;
+  apply(w); apply(a);
+  return out;
+}
+
+function buyItem(itemId){
+  const it = SHOP_ITEMS.find(x=>x.id===itemId);
+  if (!it) return;
+  if ((S.gold ?? 0) < it.price) { pushHistory("system", "金幣不足，無法購買。", {}); return; }
+  S.gold = (S.gold ?? 0) - it.price;
+  if (it.type === "weapon") {
+    S.weapon = it.id;
+    pushHistory("system", `你購買並裝備了【${it.name}】。`, { itemId: it.id });
+  } else if (it.type === "armor") {
+    S.armor = it.id;
+    pushHistory("system", `你購買並裝備了【${it.name}】。`, { itemId: it.id });
+  } else {
+    // consumable -> inventory
+    S.inventory.push({ id: it.id, qty: 1 });
+    pushHistory("system", `你購買了【${it.name}】。`, { itemId: it.id });
+  }
+  saveGame(S);
+  render();
+}
+
+function renderShop(){
+  const el = document.getElementById("shop");
+  const g = document.getElementById("shopGold");
+  if (g) g.textContent = String(S?.gold ?? 0);
+  if (!el) return;
+  if (!S) { el.innerHTML = "<div class='small'>請先建立角色。</div>"; return; }
+
+  const card = (it)=>{
+    return `<div class="row" style="justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #1f2a36;">
+      <div>
+        <div><b>${escapeHtml(it.name)}</b> <span class="pill mono" style="margin-left:6px;">${it.price}G</span></div>
+        <div class="small" style="opacity:.85;">${escapeHtml(it.desc)}</div>
+      </div>
+      <button onclick="buyItem('${it.id}')" style="min-width:84px;">購買</button>
+    </div>`;
+  };
+
+  el.innerHTML = SHOP_ITEMS.map(card).join("");
+}
+
+
 function itemName(id){ return Items[id]?.name ?? id; }
 
 function addItems(toBag, items){
@@ -248,6 +310,7 @@ function render() {
       hookExeBreakthrough();
   setupTabs();
   renderVersionInfo();
+  renderShop();
   setupSettings();
   setupBattleModal();
 }
