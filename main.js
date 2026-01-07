@@ -248,6 +248,7 @@ function render() {
   setupTabs();
   renderVersionInfo();
   setupSettings();
+  setupBattleModal();
 }
 
 function tokenIdForNext(floorId){
@@ -349,39 +350,53 @@ function renderHunt() {
 function doExplore(floor){
   if ((S.stamina ?? 0) < 1) return;
 
+  // 點擊歷練：立刻消耗 1 體力並跳出戰鬥視窗
   S.stamina -= 1;
 
   const { mid } = pickEncounter(floor);
   const m = Monsters[mid];
 
+  // 在本區顯示本次遭遇（留作紀錄）
   $("encounter").innerHTML = `
     <div class="row">
       <span class="pill">遭遇</span>
       <span class="pill">${m.name}</span>
       <span class="pill">${m.rarity} / ${m.element}</span>
     </div>
-    <div class="small">HP ${m.stats.hp}｜ATK ${m.stats.atk}｜DEF ${m.stats.def}｜STR ${m.stats.str}｜AGI ${m.stats.agi}｜INT ${m.stats.int}｜LUK ${m.stats.luk}</div>
-    <div class="row" style="margin-top:6px;">
-      <button id="fightNow" style="background:#f97316;">開戰</button>
-      <button id="retreat" style="background:#334155;">撤退（不消耗體力）</button>
-    </div>
+    <div class="small">HP ${m.stats.hp}｜ATK ${m.stats.atk}｜DEF ${m.stats.def}｜AGI ${m.stats.agi}｜INT ${m.stats.int}｜LUK ${m.stats.luk}</div>
   `;
+  $("battleLog").textContent = "";
 
-  pushHistory("explore", `你在 ${floor.name} 展開歷練（-1 體力），遭遇「${m.name}」。`, { floorId: floor.id, monsterId: mid, rarity: m.rarity });
+  // 設定待戰鬥資料
+  PendingBattle = { monsterId: mid, floorId: floor.id };
+
+  // 打開戰鬥視窗
+  const modal = document.getElementById("battleModal");
+  const body = document.getElementById("battleBody");
+  const msg = document.getElementById("battleMsg");
+  if (body){
+    body.innerHTML = `
+      <div class="row">
+        <span class="pill">${floor.name}</span>
+        <span class="pill">遭遇</span>
+        <span class="pill">${m.name}</span>
+        <span class="pill">${m.rarity}</span>
+      </div>
+      <div class="small" style="margin-top:6px;">
+        Lv.${m.level}｜屬性 ${m.element}<br/>
+        HP ${m.stats.hp}｜ATK ${m.stats.atk}｜DEF ${m.stats.def}｜AGI ${m.stats.agi}｜INT ${m.stats.int}｜LUK ${m.stats.luk}
+      </div>
+    `;
+  }
+  if (msg) msg.textContent = "";
+  if (modal) modal.classList.remove("hidden");
+
   saveGame(S);
+  renderPlayerDetails();
   renderHistory();
   renderBag();
   renderStela();
-
-  $("retreat").onclick = () => {
-    // 退回體力（因為 UI 已先扣）
-    S.stamina += 1;
-    pushHistory("explore", `你選擇撤退，沒有進入戰鬥（體力返還 +1）。`, { floorId: floor.id });
-    saveGame(S);
-    render();
-  };
-
-  $("fightNow").onclick = () => doFight(mid);
+  renderHunt();
 }
 
 function doFight(monsterId) {
@@ -393,9 +408,11 @@ function doFight(monsterId) {
   S.hp = sim.playerHp;
 
   if (!sim.win) {
-    // 醫務室（簡化）：瀕死自動傳送，救回 50HP
-    pushHistory("combat", `你敗給了「${m.name}」，瀕死傳送至醫務室，恢復至 50 HP。`, { monsterId });
+    // 醫務室：瀕死自動傳送，回到第一層重新爬塔
+    pushHistory("combat", `你敗給了「${m.name}」，瀕死傳送至醫務室，恢復至 50 HP，並回到第 1 層。`, { monsterId });
     S.hp = 50;
+    S.currentFloor = 1;
+    S.exeNeed = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1, 1);
     saveGame(S);
     render();
     return;
@@ -669,6 +686,45 @@ function hookExeBreakthrough(){
 }
 function renderExeInfo(){
   // placeholder for future expansions; kept for dropdown onchange calls
+}
+
+
+function setupBattleModal(){
+  const modal = document.getElementById("battleModal");
+  const close = document.getElementById("battleClose");
+  const body = document.getElementById("battleBody");
+  const msg = document.getElementById("battleMsg");
+  const btnFight = document.getElementById("battleFight");
+  const btnFlee = document.getElementById("battleFlee");
+
+  if (!modal || !close || !body || !btnFight || !btnFlee) return;
+
+  const shut = () => {
+    modal.classList.add("hidden");
+    if (msg) msg.textContent = "";
+  };
+
+  close.onclick = shut;
+  modal.onclick = (e) => { if (e.target === modal) shut(); };
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") shut(); });
+
+  btnFlee.onclick = () => {
+    PendingBattle = null;
+    if (msg) msg.textContent = "你選擇撤退，本次未獲得任何收益。";
+    setTimeout(shut, 250);
+  };
+
+  btnFight.onclick = () => {
+    if (!S || !PendingBattle) { shut(); return; }
+    const { monsterId } = PendingBattle;
+    PendingBattle = null;
+    try{
+      doFight(monsterId);
+      setTimeout(shut, 250);
+    } catch {
+      if (msg) msg.textContent = "戰鬥發生錯誤。";
+    }
+  };
 }
 
 function escapeHtml(s){

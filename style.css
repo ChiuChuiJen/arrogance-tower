@@ -169,7 +169,7 @@ input {
 
 /* 歷程滾動（超過 10 筆時由 JS 套用 .scrollbox） */
 #history.scrollbox{
-  max-height: 320px;
+  max-height: 260px;
   overflow-y: auto;
   padding-right: 6px;
 }
