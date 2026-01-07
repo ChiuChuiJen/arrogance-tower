@@ -1,5 +1,13 @@
 export const CHANGELOG = [
   {
+    "version": "v0.0.10-test",
+    "date": "2026-01-07",
+    "changes": [
+      "修正 PendingBattle 未宣告導致歷練按鈕報錯",
+      "戰鬥視窗可正常開啟並進行開始戰鬥/撤退"
+    ]
+  },
+  {
     "version": "v0.0.9-test",
     "date": "2026-01-07",
     "changes": [

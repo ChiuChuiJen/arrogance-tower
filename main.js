@@ -9,6 +9,7 @@ import { fightSim } from "./lib/combat.js";
 
 let S = loadSave();
 const $ = (id) => document.getElementById(id);
+let PendingBattle = null;
 
 const REALMS = ["凡人","鍛體","通脈","凝元","築基","金丹","元嬰","化神","合道","飛升"];
 const TIER_NAMES = ["一重","二重","三重","四重","五重","六重","七重","八重","九重","十重"];
