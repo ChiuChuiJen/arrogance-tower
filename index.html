@@ -1,130 +1,72 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f1620" />
-  <title>傲慢之塔 Web</title>
-  <link rel="stylesheet" href="./style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>傲慢之塔 | Arrogance Tower</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚠️</text></svg>">
 </head>
 <body>
-  <header class="bar">
-    <div class="title">《傲慢之塔》Web（GitHub Pages 版）</div>
-    <div class="row" style="justify-content:flex-end; gap:10px;">
-  <div id="versionTag" class="pill mono"></div>
-  <button id="settingsBtn" class="iconbtn" title="設定">⚙️</button>
-  <div id="playerQuick"></div>
-</div>
-  </header>
 
-  <main class="grid">
-    <section class="card">
-      <h2>角色</h2>
+    <div class="scan-line"></div> <div class="main-container">
+        <header>
+            <h1 class="glitch" data-text="ARROGANCE TOWER">ARROGANCE TOWER</h1>
+            <div class="system-status">
+                <span class="blink">● SYSTEM ONLINE</span>
+                <span>PROTOCOL: GITHUB_PAGES</span>
+            </div>
+        </header>
 
-      <div class="tabs">
-        <button class="tab active" data-tab="role">角色資訊</button>
-        <button class="tab" data-tab="bag">百納袋</button>
-        <button class="tab" data-tab="floors">樓層</button>
-      </div>
+        <main class="game-grid">
+            
+            <section class="panel dashboard">
+                <div class="panel-header">STATUS MONITOR</div>
+                <div class="stat-box">
+                    <label>ID</label>
+                    <span id="player-name">CHALLENGER</span>
+                </div>
+                <div class="stat-box">
+                    <label>FLOOR</label>
+                    <span id="floor-level" class="highlight-text">01F</span>
+                </div>
+                <div class="stat-box">
+                    <label>HP</label>
+                    <div class="progress-bar">
+                        <div class="fill" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <label>ENERGY</label>
+                    <span id="energy-val">100%</span>
+                </div>
+            </section>
 
-      <div class="panel" data-panel="role">
-        <div id="auth"></div>
+            <section class="panel terminal">
+                <div class="panel-header">EVENT LOG</div>
+                <div id="log-window" class="log-output">
+                    <div class="log-entry system">> Initializing system... OK</div>
+                    <div class="log-entry system">> Loading assets... OK</div>
+                    <div class="log-entry">> 歡迎來到傲慢之塔。</div>
+                    <div class="log-entry warning">> 警告：偵測到高危險區域。</div>
+                </div>
+            </section>
 
-        <div class="row" style="margin-top:8px;">
-          <label class="chk">
-            <input id="badge" type="checkbox" />
-            配戴「百納袋胸章」
-          </label>
-        </div>
-        <div class="small">未配戴者：擊殺不會獲得任何掉落（Canon）</div>
+            <section class="panel controls">
+                <div class="panel-header">COMMANDS</div>
+                <button class="cy-btn" onclick="executeCommand('explore')">探索樓層 [EXP]</button>
+                <button class="cy-btn" onclick="executeCommand('rest')">原地休整 [RST]</button>
+                <button class="cy-btn" onclick="executeCommand('status')">機體狀態 [STS]</button>
+                <div class="spacer"></div>
+                <button class="cy-btn danger" onclick="executeCommand('reset')">系統重置 [RES]</button>
+            </section>
+        </main>
 
-        <hr/>
-        <div id="playerDetails"></div>
-        <hr/>
-        <div id="versionInfo" class="small"></div>
-      </div>
-
-      <div class="panel hidden" data-panel="bag">
-        <div id="bag"></div>
-      </div>
-
-      <div class="panel hidden" data-panel="floors">
-        <div id="floors"></div>
-        <hr/>
-        <h3 class="sub">通天碑</h3>
-        <div id="stela"></div>
-        <hr/>
-        <h3 class="sub">歷練</h3>
-        <div id="hunt"></div>
-      </div>
-    </section>
-<section class="card">
-      <h2>歷程</h2>
-      <div id="history"></div>
-    </section>
-</main>
-
-  <script type="module" src="./main.js"></script>
-
-  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="設定">
-    <div class="modalCard">
-      <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">設定</h2>
-        <button id="settingsClose" class="iconbtn" title="關閉">✕</button>
-      </div>
-
-      <div class="small" style="margin-top:8px;">
-        匯出/匯入「存檔 JSON」的 Base64 代碼（會覆蓋目前存檔 localStorage）。
-      </div>
-
-      <hr/>
-      <div class="small">Base64 代碼</div>
-      <textarea id="saveCode" class="textarea" rows="6" placeholder="貼上 Base64 代碼…"></textarea>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="btnExport">匯出 Base64</button>
-        <button id="btnCopy" style="background:#334155;">複製</button>
-        <button id="btnImport" style="background:#16a34a;">匯入 Base64</button>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="btnDownloadJson" style="background:#0ea5e9;">下載 JSON</button>
-        <label class="iconbtn" style="padding:8px 12px; border-radius:12px;">
-          上傳 JSON
-          <input id="fileJson" type="file" accept="application/json" style="display:none;" />
-        </label>
-      </div>
-
-      <div id="settingsMsg" class="small" style="margin-top:10px; opacity:.9;"></div>
+        <footer>
+            <p>PROJECT ARROGANCE-TOWER @ 2026 | DESIGNED FOR GITHUB</p>
+        </footer>
     </div>
-  </div>
 
-
-  <div id="updatesModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="更新內容">
-    <div class="modalCard">
-      <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">更新內容</h2>
-        <button id="updatesClose" class="iconbtn" title="關閉">✕</button>
-      </div>
-      <div id="updatesBody" class="small" style="margin-top:10px;"></div>
-    </div>
-  </div>
-
-
-  <div id="battleModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="戰鬥">
-    <div class="modalCard">
-      <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">戰鬥</h2>
-        <button id="battleClose" class="iconbtn" title="關閉">✕</button>
-      </div>
-      <div id="battleBody" class="small" style="margin-top:10px;"></div>
-      <div class="row" style="margin-top:12px;">
-        <button id="battleFight" style="background:#ef4444;">開始戰鬥</button>
-        <button id="battleFlee" style="background:#334155;">撤退</button>
-      </div>
-      <div id="battleMsg" class="small" style="margin-top:10px; opacity:.9;"></div>
-    </div>
-  </div>
-
+    <script src="script.js"></script>
 </body>
 </html>
