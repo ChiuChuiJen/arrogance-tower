@@ -153,10 +153,17 @@ function render() {
       </div>
       <div class="small">存檔在本機 localStorage（GitHub Pages 可用）</div>
     `;
-    $("floors").innerHTML = "";
+    const sel = document.getElementById("floorSelect");
+    const hint = document.getElementById("floorHint");
+    if (sel) sel.innerHTML = "";
+    if (hint) hint.textContent = "";
     $("stela").innerHTML = "";
     $("hunt").innerHTML = "";
     $("bag").innerHTML = "";
+    const pd = document.getElementById("playerDetails");
+    if (pd) pd.innerHTML = "";
+    const hist = document.getElementById("history");
+    if (hist) hist.innerHTML = "";
     setTimeout(() => {
       $("create").onclick = () => {
         const nick = $("nick").value.trim() || "無名修士";
