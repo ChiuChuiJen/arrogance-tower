@@ -9,6 +9,23 @@ import { fightSim } from "./lib/combat.js";
 let S = loadSave();
 const $ = (id) => document.getElementById(id);
 
+
+const REALMS = ["凡人","鍛體","通脈","凝元","築基","金丹","元嬰","化神","合道","飛升"];
+const TIER_NAMES = ["一重","二重","三重","四重","五重","六重","七重","八重","九重","十重"];
+
+function syncRealmTier(){
+  if (!S) return;
+  const ri = S.realmIndex ?? 0;
+  const tn = S.tierNum ?? 1;
+  S.realm = REALMS[Math.max(0, Math.min(REALMS.length-1, ri))];
+  S.tier = TIER_NAMES[Math.max(1, Math.min(10, tn)) - 1];
+}
+
+function expNeedFor(ri, tn){
+  const base = 60;
+  return Math.floor(base * (1 + ri*0.65) * (1 + (tn-1)*0.20));
+}
+
 function itemName(id){ return Items[id]?.name ?? id; }
 
 function addItems(toBag, items){
@@ -92,6 +109,13 @@ function renderPlayerDetails(){
       </div>
 
       <div class="kv">
+        <span class="label">修為(EXP)</span>
+        <span class="value">${S.exp} / ${S.expNeed}</span>
+        <div class="barwrap"><div class="barfill mp" style="width:${pct(S.exp, S.expNeed)}%;"></div></div>
+        <button id="breakBtn" ${S.exp >= S.expNeed ? "" : "disabled"} style="background:#a855f7;">突破</button>
+      </div>
+
+      <div class="kv">
         <span class="label">體力</span>
         <span class="value">${S.stamina} / ${S.maxStamina}</span>
         <div class="barwrap"><div class="barfill sta" style="width:${stPct}%;"></div></div>
@@ -129,10 +153,17 @@ function render() {
       </div>
       <div class="small">存檔在本機 localStorage（GitHub Pages 可用）</div>
     `;
-    $("floors").innerHTML = "";
+    const sel = document.getElementById("floorSelect");
+    const hint = document.getElementById("floorHint");
+    if (sel) sel.innerHTML = "";
+    if (hint) hint.textContent = "";
     $("stela").innerHTML = "";
     $("hunt").innerHTML = "";
     $("bag").innerHTML = "";
+    const pd = document.getElementById("playerDetails");
+    if (pd) pd.innerHTML = "";
+    const hist = document.getElementById("history");
+    if (hist) hist.innerHTML = "";
     setTimeout(() => {
       $("create").onclick = () => {
         const nick = $("nick").value.trim() || "無名修士";
@@ -154,8 +185,11 @@ function render() {
   if (S.maxStamina == null) S.maxStamina = 10;
   if (S.maxHp == null) S.maxHp = S.hp ?? 120;
   if (S.maxMp == null) S.maxMp = S.mp ?? 60;
-  if (S.realm == null) S.realm = "凡人";
-  if (S.tier == null) S.tier = "一重";
+  if (S.realmIndex == null) S.realmIndex = 0;
+  if (S.tierNum == null) S.tierNum = 1;
+  if (S.exp == null) S.exp = 0;
+  if (S.expNeed == null) S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
+  syncRealmTier();
   ensureHistory();
 
   $("auth").innerHTML = `
@@ -188,25 +222,28 @@ function render() {
     render();
   };
 
-  // Floors list
-  $("floors").innerHTML = Floors.map(f => {
-    const locked = f.id > S.unlockedFloor;
-    const active = f.id === (S.currentFloor ?? 1);
-    return `<div class="row" style="margin:6px 0;">
-      <span class="pill">${active ? "▶" : ""}${f.name}</span>
-      <span class="pill">屬性：${f.element}</span>
-      <button ${locked ? "disabled" : ""} data-floor="${f.id}">進入</button>
-    </div>`;
-  }).join("");
-
-  [...$("floors").querySelectorAll("button[data-floor]")].forEach(btn => {
-    btn.onclick = () => {
-      const fid = Number(btn.dataset.floor);
+  // Floors (dropdown)
+  const sel = document.getElementById("floorSelect");
+  const hint = document.getElementById("floorHint");
+  if (sel) {
+    const unlocked = Floors.filter(f => f.id <= S.unlockedFloor);
+    sel.innerHTML = unlocked.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
+    sel.value = String(S.currentFloor ?? 1);
+    sel.onchange = () => {
+      const fid = Number(sel.value);
       S.currentFloor = fid;
       pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
       saveGame(S);
       renderHunt();
       renderStela();
+      renderHistory();
+      renderPlayerDetails();
+      hookBreakthrough();
+    };
+    if (hint) hint.textContent = `已解鎖至第 ${S.unlockedFloor} 層；死亡將被送回第 1 層並需重新爬塔。`;
+  }
+
+  renderStela();
       renderHistory();
     };
   });
@@ -217,6 +254,7 @@ function render() {
   renderHistory();
   renderPlayerDetails();
   setupTabs();
+  hookBreakthrough();
 }
 
 function tokenIdForNext(floorId){
@@ -363,12 +401,18 @@ function doFight(monsterId) {
 
   if (!sim.win) {
     // 醫務室（簡化）：瀕死自動傳送，救回 50HP
-    pushHistory("combat", `你敗給了「${m.name}」，瀕死傳送至醫務室，恢復至 50 HP。`, { monsterId });
+    pushHistory("combat", `你敗給了「${m.name}」，瀕死傳送至醫務室；依規則需從第 1 層重新爬塔。`, { monsterId });
     S.hp = 50;
+    S.currentFloor = 1;
+    S.unlockedFloor = 1;
     saveGame(S);
     render();
     return;
   }
+
+  // 勝利：修為（EXP）
+  const expGain = ({ "一般": 12, "菁英": 28, "Mini Boss": 55, "Boss": 90 }[m.rarity] ?? 10) + Math.floor(Math.random()*6);
+  S.exp += expGain;
 
   // 勝利：掉落
   const drop = rollDrops({ floorId: S.currentFloor, rarity: m.rarity, badgeOn: S.badgeOn });
@@ -384,12 +428,13 @@ function doFight(monsterId) {
   }
 
   const gotItems = Object.entries(drop.items).map(([id,q])=>`${itemName(id)}×${q}`).join("、");
-  const dropMsg = S.badgeOn
-    ? `獲得 金幣+${drop.gold}` + (gotItems ? `；掉落：${gotItems}` : "")
-    : "未配戴百納袋胸章，因此未獲得任何掉落。";
+  const dropMsg = (S.badgeOn
+    ? `修為 +${expGain}；獲得 金幣+${drop.gold}` + (gotItems ? `；掉落：${gotItems}` : "")
+    : `修為 +${expGain}；未配戴百納袋胸章，因此未獲得任何掉落。`);
 
   pushHistory("combat", `你擊敗了「${m.name}」。${dropMsg}`, { monsterId, gold: drop.gold, items: drop.items });
 
+  S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
   saveGame(S);
   render();
 }
@@ -451,6 +496,36 @@ function renderHistory(){
     </div>`;
   }).join("");
   el.innerHTML = items || `<div class="small">尚無歷程。</div>`;
+}
+
+
+function hookBreakthrough(){
+  const btn = document.getElementById("breakBtn");
+  if (!btn) return;
+  btn.onclick = () => {
+    if (!S || S.exp < S.expNeed) return;
+
+    S.exp -= S.expNeed;
+
+    if ((S.tierNum ?? 1) < 10) {
+      S.tierNum += 1;
+      syncRealmTier();
+      pushHistory("system", `你突破成功：境界維持「${S.realm}」，層級提升至「${S.tier}」。`, { realm: S.realm, tier: S.tier });
+    } else {
+      S.tierNum = 1;
+      S.realmIndex = Math.min((S.realmIndex ?? 0) + 1, REALMS.length - 1);
+      syncRealmTier();
+      pushHistory("system", `你突破大境界：提升至「${S.realm}」，層級重置為「${S.tier}」。`, { realm: S.realm, tier: S.tier });
+      S.maxHp += 15;
+      S.maxMp += 8;
+      S.hp = S.maxHp;
+      S.mp = S.maxMp;
+    }
+
+    S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
+    saveGame(S);
+    render();
+  };
 }
 
 function escapeHtml(s){
