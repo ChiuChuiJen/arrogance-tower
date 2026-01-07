@@ -168,7 +168,10 @@ input {
 
 
 /* 歷程滾動（超過 10 筆時由 JS 套用 .scrollbox） */
-#history.scrollbox{ overflow-y:auto; padding-right:6px; }
+#history.scrollbox{
+  overflow-y:auto;
+  padding-right:6px;
+}
 select.select{
   background:#0b0f14;
   border:1px solid #1f2a36;
@@ -193,4 +196,4 @@ select.select{
 }
 .updateIcon:hover{ filter:brightness(1.1); }
 
-#history{ max-height:260px; overflow-y:auto; padding-right:6px; }
+#history{ max-height:260px; }

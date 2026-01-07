@@ -1,8 +1,5 @@
 import { APP_VERSION } from "./data/version.js";
 import { CHANGELOG } from "./data/changelog.js";
-import { UserWeapons } from "./data/weapons_user.js";
-import { UserArmors } from "./data/armors_user.js";
-import { CultivationTable } from "./data/cultivation_user.js";
 import { Floors } from "./data/floors.js";
 import { Monsters } from "./data/monsters.js";
 import { Items } from "./data/items.js";
@@ -24,84 +21,170 @@ function syncRealmTier(){
   S.tier = TIER_NAMES[Math.max(1, Math.min(10, tn)) - 1];
 }
 function exeNeedFor(ri, tn, floorId=1){
-  // 依附件《修為經驗表》：每層提供「升一重需求範圍」
-  const t = CultivationTable.find(x => x.id === floorId) || CultivationTable[CultivationTable.length-1];
-  const fOver = Math.max(0, floorId - t.id);
-  const minNeed = t.needMin ?? 100;
-  const maxNeed = t.needMax ?? (minNeed*3);
-  const tier = clamp(1, 10, tn ?? 1);
-  // 在 1~10 重之間線性插值（第 1 重用 min，第 10 重用 max）
-  const base = Math.round(minNeed + (maxNeed - minNeed) * ((tier-1)/9));
-  const realmFactor = 1 + (ri ?? 0) * 0.12;     // 境界越高，突破門檻略升
-  const floorFactor = Math.pow(1.20, fOver);    // 超出表格樓層後，需求遞增
-  return Math.round(base * realmFactor * floorFactor);
+  const base = 100;
+  const realmFactor = (1 + ri*0.70);
+  const tierFactor = (1 + (tn-1)*0.22);
+  const floorFactor = (1 + Math.max(0, (floorId-1))*0.03); // 高樓層需求略升
+  return Math.floor(base * realmFactor * tierFactor * floorFactor);
 }
 
-
-const SHOP_CONSUMABLES = [
-  { id:"pill_hp_s", type:"consumable", name:"小回氣丹", desc:"回復 HP +30", price: 25, use: (S)=>{ S.hp = Math.min((S.maxHp ?? S.hp ?? 120), (S.hp ?? 0) + 30); } },
-  { id:"pill_mp_s", type:"consumable", name:"小回靈丹", desc:"回復 MP +20", price: 25, use: (S)=>{ S.mp = Math.min((S.maxMp ?? S.mp ?? 60), (S.mp ?? 0) + 20); } },
-  { id:"pill_sta_s", type:"consumable", name:"回體丹", desc:"體力 +1（上限 10）", price: 40, use: (S)=>{ S.stamina = Math.min(10, (S.stamina ?? 0) + 1); } },
-];
-
-function isBasicRarity(r){ return r === "一般"; }
-
-function mapWeaponToShop(w){
-  const atk = w.stats?.atk ?? 0;
-  const price = Math.max(60, Math.round(atk * 1.0)); // 基本武器：價格跟攻擊粗略掛鉤
-  return { id: w.id, type:"weapon", name: w.name, desc: `ATK +${atk}（${w.element}）`, price, bonus:{ atk } };
+function maxStaminaForRealm(ri){
+  const base = 10;
+  return base + Math.max(0, ri) * 2; // 境界越高，體力上限越高
 }
-function mapArmorToShop(a){
-  const def = a.stats?.def ?? 0;
-  const price = Math.max(60, Math.round(def * 1.0));
-  return { id: a.id, type:"armor", name: a.name, desc: `DEF +${def}（${a.element}）`, price, bonus:{ def } };
-}
-
-const BASIC_WEAPONS = UserWeapons.filter(w=>isBasicRarity(w.rarity)).map(mapWeaponToShop);
-const BASIC_ARMORS  = UserArmors.filter(a=>isBasicRarity(a.rarity)).map(mapArmorToShop);
 
 const SHOP_ITEMS = [
-  ...SHOP_CONSUMABLES,
-  ...BASIC_WEAPONS,
-  ...BASIC_ARMORS,
+  {
+    "id": "pill_hp_s",
+    "type": "consumable",
+    "name": "小回氣丹",
+    "desc": "回復 HP +30",
+    "price": 25
+  },
+  {
+    "id": "pill_mp_s",
+    "type": "consumable",
+    "name": "小回靈丹",
+    "desc": "回復 MP +20",
+    "price": 25
+  },
+  {
+    "id": "pill_sta_s",
+    "type": "consumable",
+    "name": "回體丹",
+    "desc": "體力 +1（上限依境界）",
+    "price": 40
+  },
+  {
+    "id": "w_w0_0",
+    "type": "weapon",
+    "name": "黑鋼裂魂劍",
+    "desc": "ATK +4 / 屬性:暗",
+    "price": 220,
+    "bonus": {
+      "atk": 4
+    }
+  },
+  {
+    "id": "w_w1_1",
+    "type": "weapon",
+    "name": "蒼雷破城槍",
+    "desc": "ATK +4 / 屬性:雷",
+    "price": 220,
+    "bonus": {
+      "atk": 4
+    }
+  },
+  {
+    "id": "w_w2_2",
+    "type": "weapon",
+    "name": "赤焰裁決斧",
+    "desc": "ATK +4 / 屬性:火",
+    "price": 220,
+    "bonus": {
+      "atk": 4
+    }
+  },
+  {
+    "id": "w_w3_3",
+    "type": "weapon",
+    "name": "冰脈月刃",
+    "desc": "ATK +3 / 屬性:冰",
+    "price": 195,
+    "bonus": {
+      "atk": 3
+    }
+  },
+  {
+    "id": "w_w4_4",
+    "type": "weapon",
+    "name": "虛空詠嘆法杖",
+    "desc": "ATK +3 / 屬性:虛空",
+    "price": 195,
+    "bonus": {
+      "atk": 3
+    }
+  },
+  {
+    "id": "a_a0_0",
+    "type": "armor",
+    "name": "黑曜守護鎧",
+    "desc": "DEF +4 / 屬性:暗",
+    "price": 220,
+    "bonus": {
+      "def": 4
+    }
+  },
+  {
+    "id": "a_a1_1",
+    "type": "armor",
+    "name": "炎獄戰甲",
+    "desc": "DEF +3 / 屬性:火",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  },
+  {
+    "id": "a_a2_2",
+    "type": "armor",
+    "name": "冰封王冠",
+    "desc": "DEF +3 / 屬性:冰",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  },
+  {
+    "id": "a_a3_3",
+    "type": "armor",
+    "name": "雷霆戰靴",
+    "desc": "DEF +3 / 屬性:雷",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  },
+  {
+    "id": "a_a4_4",
+    "type": "armor",
+    "name": "星紋斗篷",
+    "desc": "DEF +3 / 屬性:星",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  }
 ];
-
-function getWeaponById(id){ return UserWeapons.find(x=>x.id===id) ?? null; }
-function getArmorById(id){ return UserArmors.find(x=>x.id===id) ?? null; }
-
 
 function getEquipBonus(){
   const out = { atk:0, def:0, agi:0, int:0, luk:0, hp:0, mp:0 };
-  const w = S.weaponId ? getWeaponById(S.weaponId) : null;
-  const a = S.armorId ? getArmorById(S.armorId) : null;
-  if (w?.stats?.atk) out.atk += w.stats.atk;
-  if (a?.stats?.def) out.def += a.stats.def;
-  // 後續若要處理 effects，可在這裡擴充
+  const apply = (it)=>{ if(!it||!it.bonus) return; for(const k in it.bonus){ out[k]=(out[k]??0)+it.bonus[k]; } };
+  const w = S.weapon ? SHOP_ITEMS.find(x=>x.id===S.weapon) : null;
+  const a = S.armor ? SHOP_ITEMS.find(x=>x.id===S.armor) : null;
+  apply(w); apply(a);
   return out;
 }
 
 function buyItem(itemId){
-  const it = SHOP_ITEMS.find(x => x.id === itemId);
+  const it = SHOP_ITEMS.find(x=>x.id===itemId);
   if (!it) return;
   if ((S.gold ?? 0) < it.price) { pushHistory("system", "金幣不足，無法購買。", {}); return; }
-
   S.gold = (S.gold ?? 0) - it.price;
-
   if (it.type === "weapon") {
-    S.weaponId = it.id;
+    S.weapon = it.id;
     pushHistory("system", `你購買並裝備了【${it.name}】。`, { itemId: it.id });
   } else if (it.type === "armor") {
-    S.armorId = it.id;
+    S.armor = it.id;
     pushHistory("system", `你購買並裝備了【${it.name}】。`, { itemId: it.id });
   } else {
+    // consumable -> inventory
     S.inventory.push({ id: it.id, qty: 1 });
     pushHistory("system", `你購買了【${it.name}】。`, { itemId: it.id });
   }
-
   saveGame(S);
   render();
 }
-
 
 function renderShop(){
   const el = document.getElementById("shop");
@@ -517,11 +600,12 @@ function doFight(monsterId) {
   }
 
   // 勝利：修為值(EXE)（依境界/樓層/怪物難度動態）
+  const baseExe = ({ "一般": 8, "菁英": 18, "Mini Boss": 35, "Boss": 60 }[m.rarity] ?? 6);
   const floorId = S.currentFloor ?? 1;
-  const t = CultivationTable.find(x => x.id === floorId) || CultivationTable[CultivationTable.length-1];
-  const baseExe = (t.exp?.[m.rarity] ?? 6);
+  const floorBonus = 1 + Math.max(0, floorId-1) * 0.06; // 高樓層掉更多
+  const realmBonus = 1 + (S.realmIndex ?? 0) * 0.08;   // 境界越高，戰鬥效率略升（掉落略升）
   const diffBonus = 1 + Math.max(0, (m.level ?? 1) - (S.level ?? 1)) * 0.03; // 打更強怪略多
-  const exeGain = Math.max(1, Math.round(baseExe * diffBonus));
+  const exeGain = Math.floor((baseExe * floorBonus * realmBonus * diffBonus) + Math.random()*4);
   S.exe = (S.exe ?? 0) + exeGain;
   S.exeNeed = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1, floorId);
   
@@ -776,6 +860,8 @@ function hookExeBreakthrough(){
       S.mp = S.maxMp;
     }
 
+    S.maxStamina = maxStaminaForRealm(S.realmIndex ?? 0);
+    S.stamina = Math.min(S.maxStamina, S.stamina ?? 0);
     S.exeNeed = exeNeedFor(S.realmIndex, S.tierNum, S.currentFloor ?? 1);
     saveGame(S);
     render();
