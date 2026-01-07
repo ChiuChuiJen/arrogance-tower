@@ -41,6 +41,12 @@ def main():
 
   maj, minor, patch, is_test = parse(cur)
   patch += 1
+  if patch >= 10:  # carry
+    patch = 0
+    minor += 1
+  if minor >= 10:
+    minor = 0
+    maj += 1
   if args.release:
     is_test = False
   newv = format_ver(maj, minor, patch, is_test)
