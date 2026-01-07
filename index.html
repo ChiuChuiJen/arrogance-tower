@@ -19,14 +19,30 @@
   <main class="grid">
     <section class="card">
       <h2>角色</h2>
-      <div id="auth"></div>
-      <div class="row">
-        <label class="chk">
-          <input id="badge" type="checkbox" />
-          配戴「百納袋胸章」
-        </label>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="role">角色資訊</button>
+        <button class="tab" data-tab="bag">百納袋</button>
       </div>
-      <div class="small">未配戴者：擊殺不會獲得任何掉落（Canon）</div>
+
+      <div class="panel" data-panel="role">
+        <div id="auth"></div>
+
+        <div class="row" style="margin-top:8px;">
+          <label class="chk">
+            <input id="badge" type="checkbox" />
+            配戴「百納袋胸章」
+          </label>
+        </div>
+        <div class="small">未配戴者：擊殺不會獲得任何掉落（Canon）</div>
+
+        <hr/>
+        <div id="playerDetails"></div>
+      </div>
+
+      <div class="panel hidden" data-panel="bag">
+        <div id="bag"></div>
+      </div>
     </section>
 
     <section class="card">
@@ -45,12 +61,7 @@
       <h2>歷程</h2>
       <div id="history"></div>
     </section>
-
-    <section class="card">
-      <h2>背包（百納袋）</h2>
-      <div id="bag"></div>
-    </section>
-  </main>
+</main>
 
   <script type="module" src="./main.js"></script>
 </body>

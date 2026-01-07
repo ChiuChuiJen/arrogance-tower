@@ -36,6 +36,70 @@ function pushHistory(type, message, meta = {}){
   if (S.history.length > 120) S.history.length = 120;
 }
 
+
+function setupTabs(){
+  const tabs = document.querySelectorAll(".tab");
+  const panels = document.querySelectorAll(".panel");
+  tabs.forEach(t => {
+    t.onclick = () => {
+      tabs.forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      const key = t.dataset.tab;
+      panels.forEach(p => {
+        p.classList.toggle("hidden", p.dataset.panel !== key);
+      });
+    };
+  });
+}
+
+function pct(cur, max){
+  if (!max || max <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((cur/max)*100)));
+}
+
+function renderPlayerDetails(){
+  const el = document.getElementById("playerDetails");
+  if (!el || !S) return;
+
+  const hpPct = pct(S.hp, S.maxHp);
+  const mpPct = pct(S.mp, S.maxMp);
+  const stPct = pct(S.stamina, S.maxStamina);
+
+  el.innerHTML = `
+    <div class="statbox">
+      <div class="kv">
+        <span class="pill">會員編號：${S.memberId}</span>
+        <span class="pill">暱稱：${S.nickname}</span>
+      </div>
+
+      <div class="kv">
+        <span class="pill">境界：${S.realm}</span>
+        <span class="pill">層級：${S.tier}</span>
+        <span class="pill">樓層：第 ${S.currentFloor ?? 1} 層</span>
+        <span class="pill">金幣：${S.gold}</span>
+      </div>
+
+      <div class="kv">
+        <span class="label">HP</span>
+        <span class="value">${S.hp} / ${S.maxHp}</span>
+        <div class="barwrap"><div class="barfill" style="width:${hpPct}%;"></div></div>
+      </div>
+
+      <div class="kv">
+        <span class="label">MP</span>
+        <span class="value">${S.mp} / ${S.maxMp}</span>
+        <div class="barwrap"><div class="barfill mp" style="width:${mpPct}%;"></div></div>
+      </div>
+
+      <div class="kv">
+        <span class="label">體力</span>
+        <span class="value">${S.stamina} / ${S.maxStamina}</span>
+        <div class="barwrap"><div class="barfill sta" style="width:${stPct}%;"></div></div>
+      </div>
+    </div>
+  `;
+}
+
 function fmtTime(ts){
   const d = new Date(ts);
   const pad = (n)=> String(n).padStart(2,"0");
@@ -51,7 +115,7 @@ function render() {
        <span class="pill">Lv.${S.level}</span>
        <span class="pill">HP ${S.hp}</span>
        <span class="pill">MP ${S.mp}</span>
-       <span class="pill">體力 ${S.stamina ?? 10}</span>
+       <span class="pill">體力 ${S.stamina ?? 10}/${S.maxStamina ?? 10}</span>
        <span class="pill">金幣 ${S.gold}</span>`
     : `<span class="small">尚未建立角色</span>`;
 
@@ -87,6 +151,11 @@ function render() {
 
   // Backfill for existing saves
   if (S.stamina == null) S.stamina = 10;
+  if (S.maxStamina == null) S.maxStamina = 10;
+  if (S.maxHp == null) S.maxHp = S.hp ?? 120;
+  if (S.maxMp == null) S.maxMp = S.mp ?? 60;
+  if (S.realm == null) S.realm = "凡人";
+  if (S.tier == null) S.tier = "一重";
   ensureHistory();
 
   $("auth").innerHTML = `
@@ -146,6 +215,8 @@ function render() {
   renderHunt();
   renderBag();
   renderHistory();
+  renderPlayerDetails();
+  setupTabs();
 }
 
 function tokenIdForNext(floorId){

@@ -97,3 +97,26 @@ input {
 
 /* Make long logs wrap nicely on small screens */
 #battleLog { white-space: pre-wrap; word-break: break-word; }
+
+
+/* Tabs */
+.tabs { display:flex; gap:8px; margin: 6px 0 10px 0; }
+.tab {
+  background:#111c29;
+  border:1px solid #1f2a36;
+  color:#e8eef6;
+  padding:8px 12px;
+  border-radius:999px;
+}
+.tab.active { background:#1b6ef3; border-color:#1b6ef3; }
+.panel.hidden { display:none; }
+
+/* Bars */
+.statbox { display:grid; gap:10px; }
+.kv { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.kv .label { opacity:.85; font-size:12px; min-width:36px; }
+.kv .value { font-weight:600; }
+.barwrap { width: 100%; background:#0b0f14; border:1px solid #1f2a36; border-radius:999px; overflow:hidden; height:12px; }
+.barfill { height:100%; width:0%; background:#16a34a; }
+.barfill.mp { background:#0ea5e9; }
+.barfill.sta { background:#f97316; }
