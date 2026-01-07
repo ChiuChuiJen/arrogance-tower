@@ -9,14 +9,17 @@
 </head>
 <body>
   <header class="bar">
-    <div class="title">《傲慢之塔》Web（GitHub Pages 版）</div>
-    <div class="row" style="justify-content:flex-end; gap:10px;">
-  <div id="versionTag" class="pill mono"></div>
-  <button id="settingsBtn" class="iconbtn" title="設定">⚙️</button>
-  <div id="playerQuick"></div>
-</div>
+    <div style="width:56px;"></div>
+    <div class="titleWrap">
+      <div class="title">傲慢之塔</div>
+      <div class="ver" id="topVer"></div>
+    </div>
+    <div class="row" style="justify-content:flex-end;">
+      <button id="openSettings" class="iconbtn" title="設定">⚙</button>
+    </div>
   </header>
 
+  <div class="wrap">
   <main class="grid">
     <section class="card">
       <h2>角色</h2>
@@ -54,15 +57,26 @@
         <h3 class="sub">通天碑</h3>
         <div id="stela"></div>
         <hr/>
-        <h3 class="sub">歷練</h3>
+        <h3 class="sub">探索</h3>
         <div id="hunt"></div>
+      
+      <div class="panel hidden" data-panel="shop">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <div class="pill">雜貨店</div>
+          <div class="small">金幣：<span id="shopGold"></span></div>
+        </div>
+        <div id="shop" style="margin-top:10px;"></div>
+        <div class="small" style="margin-top:8px; opacity:.85;">可購買：基本丹藥、基本武器、防具</div>
       </div>
+
+</div>
     </section>
 <section class="card">
       <h2>歷程</h2>
       <div id="history"></div>
     </section>
 </main>
+</div>
 
   <script type="module" src="./main.js"></script>
 

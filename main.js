@@ -28,6 +28,185 @@ function exeNeedFor(ri, tn, floorId=1){
   return Math.floor(base * realmFactor * tierFactor * floorFactor);
 }
 
+function maxStaminaForRealm(ri){
+  const base = 10;
+  return base + Math.max(0, ri) * 2; // 境界越高，體力上限越高
+}
+
+const SHOP_ITEMS = [
+  {
+    "id": "pill_hp_s",
+    "type": "consumable",
+    "name": "小回氣丹",
+    "desc": "回復 HP +30",
+    "price": 25
+  },
+  {
+    "id": "pill_mp_s",
+    "type": "consumable",
+    "name": "小回靈丹",
+    "desc": "回復 MP +20",
+    "price": 25
+  },
+  {
+    "id": "pill_sta_s",
+    "type": "consumable",
+    "name": "回體丹",
+    "desc": "體力 +1（上限依境界）",
+    "price": 40
+  },
+  {
+    "id": "w_w0_0",
+    "type": "weapon",
+    "name": "黑鋼裂魂劍",
+    "desc": "ATK +4 / 屬性:暗",
+    "price": 220,
+    "bonus": {
+      "atk": 4
+    }
+  },
+  {
+    "id": "w_w1_1",
+    "type": "weapon",
+    "name": "蒼雷破城槍",
+    "desc": "ATK +4 / 屬性:雷",
+    "price": 220,
+    "bonus": {
+      "atk": 4
+    }
+  },
+  {
+    "id": "w_w2_2",
+    "type": "weapon",
+    "name": "赤焰裁決斧",
+    "desc": "ATK +4 / 屬性:火",
+    "price": 220,
+    "bonus": {
+      "atk": 4
+    }
+  },
+  {
+    "id": "w_w3_3",
+    "type": "weapon",
+    "name": "冰脈月刃",
+    "desc": "ATK +3 / 屬性:冰",
+    "price": 195,
+    "bonus": {
+      "atk": 3
+    }
+  },
+  {
+    "id": "w_w4_4",
+    "type": "weapon",
+    "name": "虛空詠嘆法杖",
+    "desc": "ATK +3 / 屬性:虛空",
+    "price": 195,
+    "bonus": {
+      "atk": 3
+    }
+  },
+  {
+    "id": "a_a0_0",
+    "type": "armor",
+    "name": "黑曜守護鎧",
+    "desc": "DEF +4 / 屬性:暗",
+    "price": 220,
+    "bonus": {
+      "def": 4
+    }
+  },
+  {
+    "id": "a_a1_1",
+    "type": "armor",
+    "name": "炎獄戰甲",
+    "desc": "DEF +3 / 屬性:火",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  },
+  {
+    "id": "a_a2_2",
+    "type": "armor",
+    "name": "冰封王冠",
+    "desc": "DEF +3 / 屬性:冰",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  },
+  {
+    "id": "a_a3_3",
+    "type": "armor",
+    "name": "雷霆戰靴",
+    "desc": "DEF +3 / 屬性:雷",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  },
+  {
+    "id": "a_a4_4",
+    "type": "armor",
+    "name": "星紋斗篷",
+    "desc": "DEF +3 / 屬性:星",
+    "price": 195,
+    "bonus": {
+      "def": 3
+    }
+  }
+];
+
+function getEquipBonus(){
+  const out = { atk:0, def:0, agi:0, int:0, luk:0, hp:0, mp:0 };
+  const apply = (it)=>{ if(!it||!it.bonus) return; for(const k in it.bonus){ out[k]=(out[k]??0)+it.bonus[k]; } };
+  const w = S.weapon ? SHOP_ITEMS.find(x=>x.id===S.weapon) : null;
+  const a = S.armor ? SHOP_ITEMS.find(x=>x.id===S.armor) : null;
+  apply(w); apply(a);
+  return out;
+}
+
+function buyItem(itemId){
+  const it = SHOP_ITEMS.find(x=>x.id===itemId);
+  if (!it) return;
+  if ((S.gold ?? 0) < it.price) { pushHistory("system", "金幣不足，無法購買。", {}); return; }
+  S.gold = (S.gold ?? 0) - it.price;
+  if (it.type === "weapon") {
+    S.weapon = it.id;
+    pushHistory("system", `你購買並裝備了【${it.name}】。`, { itemId: it.id });
+  } else if (it.type === "armor") {
+    S.armor = it.id;
+    pushHistory("system", `你購買並裝備了【${it.name}】。`, { itemId: it.id });
+  } else {
+    // consumable -> inventory
+    S.inventory.push({ id: it.id, qty: 1 });
+    pushHistory("system", `你購買了【${it.name}】。`, { itemId: it.id });
+  }
+  saveGame(S);
+  render();
+}
+
+function renderShop(){
+  const el = document.getElementById("shop");
+  const g = document.getElementById("shopGold");
+  if (g) g.textContent = String(S?.gold ?? 0);
+  if (!el) return;
+  if (!S) { el.innerHTML = "<div class='small'>請先建立角色。</div>"; return; }
+
+  const card = (it)=>{
+    return `<div class="row" style="justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #1f2a36;">
+      <div>
+        <div><b>${escapeHtml(it.name)}</b> <span class="pill mono" style="margin-left:6px;">${it.price}G</span></div>
+        <div class="small" style="opacity:.85;">${escapeHtml(it.desc)}</div>
+      </div>
+      <button onclick="buyItem('${it.id}')" style="min-width:84px;">購買</button>
+    </div>`;
+  };
+
+  el.innerHTML = SHOP_ITEMS.map(card).join("");
+}
+
+
 function itemName(id){ return Items[id]?.name ?? id; }
 
 function addItems(toBag, items){
@@ -247,7 +426,9 @@ function render() {
   renderPlayerDetails();
       hookExeBreakthrough();
   setupTabs();
+  renderTopVer();
   renderVersionInfo();
+  renderShop();
   setupSettings();
   setupBattleModal();
 }
@@ -534,6 +715,8 @@ function downloadText(filename, text){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 500);
 }
+function renderTopVer(){ const t=document.getElementById('topVer'); if(t) t.textContent = (APP_VERSION ?? '').toUpperCase().replace('TEST','ADAPTIVE'); }
+
 function renderVersionInfo(){
   const el = document.getElementById("versionInfo");
   if (!el) return;
@@ -680,6 +863,8 @@ function hookExeBreakthrough(){
       S.mp = S.maxMp;
     }
 
+    S.maxStamina = maxStaminaForRealm(S.realmIndex ?? 0);
+    S.stamina = Math.min(S.maxStamina, S.stamina ?? 0);
     S.exeNeed = exeNeedFor(S.realmIndex, S.tierNum, S.currentFloor ?? 1);
     saveGame(S);
     render();

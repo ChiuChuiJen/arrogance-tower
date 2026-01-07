@@ -1,63 +1,25 @@
-#!/usr/bin/env python3
-"""
-Bump app version (patch) and update:
-- data/version.js
-- VERSION.txt
-- README.md (optional line)
-Version format: vMAJOR.MINOR.PATCH-test (default) or vMAJOR.MINOR.PATCH
-Usage:
-  python bump_version.py
-  python bump_version.py --release
-"""
-from __future__ import annotations
-from pathlib import Path
 import re
-import argparse
+from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-VER_TXT = ROOT / "VERSION.txt"
-VER_JS = ROOT / "data" / "version.js"
-README = ROOT / "README.md"
+vfile = Path(__file__).parent / "data" / "version.js"
+text = vfile.read_text(encoding="utf-8")
 
-def parse(v: str):
-  v = v.strip()
-  m = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)(-test)?", v)
-  if not m:
-    raise SystemExit(f"Unrecognized version: {v}")
-  return int(m.group(1)), int(m.group(2)), int(m.group(3)), bool(m.group(4))
+m = re.search(r'APP_VERSION\s*=\s*"v(\d+)\.(\d+)\.(\d+)(-[^"]*)?"', text)
+if not m:
+    raise SystemExit("Cannot find APP_VERSION")
 
-def format_ver(maj, minor, patch, is_test):
-  return f"v{maj}.{minor}.{patch}" + ("-test" if is_test else "")
+maj = int(m.group(1)); minor = int(m.group(2)); patch = int(m.group(3))
+suffix = m.group(4) or ""
 
-def main():
-  ap = argparse.ArgumentParser()
-  ap.add_argument("--release", action="store_true", help="drop -test suffix")
-  args = ap.parse_args()
+# rule: .9 carries to next digit (semantic-ish carry)
+patch += 1
+if patch >= 10:
+    patch = 0
+    minor += 1
+if minor >= 10:
+    minor = 0
+    maj += 1
 
-  if VER_TXT.exists():
-    cur = VER_TXT.read_text(encoding="utf-8").strip()
-  else:
-    cur = "v0.0.0-test"
-
-  maj, minor, patch, is_test = parse(cur)
-  patch += 1
-  if args.release:
-    is_test = False
-  newv = format_ver(maj, minor, patch, is_test)
-
-  VER_TXT.write_text(newv + "\n", encoding="utf-8")
-  VER_JS.write_text(f'export const APP_VERSION = "{newv}";\n', encoding="utf-8")
-
-  if README.exists():
-    txt = README.read_text(encoding="utf-8")
-    # Keep a simple version line at top if present
-    if "版本：" in txt:
-      txt = re.sub(r"版本：\s*v[\d\.]+(-test)?", f"版本：{newv}", txt)
-    else:
-      txt = f"版本：{newv}\n\n" + txt
-    README.write_text(txt, encoding="utf-8")
-
-  print(newv)
-
-if __name__ == "__main__":
-  main()
+new_ver = f'v{maj}.{minor}.{patch}{suffix}'
+vfile.write_text(f'export const APP_VERSION = "{new_ver}";\n', encoding="utf-8")
+print(new_ver)
