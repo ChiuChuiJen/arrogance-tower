@@ -130,10 +130,10 @@ function render() {
       </div>
       <div class="small">存檔在本機 localStorage（GitHub Pages 可用）</div>
     `;
-    $("floors").innerHTML = "";
-    $("stela").innerHTML = "";
-    $("hunt").innerHTML = "";
-    $("bag").innerHTML = "";
+    const fe=document.getElementById("floors"); if(fe) fe.innerHTML="";
+    const se=document.getElementById("stela"); if(se) se.innerHTML="";
+    const he=document.getElementById("hunt"); if(he) he.innerHTML="";
+    const be=document.getElementById("bag"); if(be) be.innerHTML="";
     setTimeout(() => {
       $("create").onclick = () => {
         const nick = $("nick").value.trim() || "無名修士";

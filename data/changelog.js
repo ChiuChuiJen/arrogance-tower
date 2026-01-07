@@ -1,5 +1,13 @@
 export const CHANGELOG = [
   {
+    "version": "v0.0.5-test",
+    "date": "2026-01-07",
+    "changes": [
+      "修正通天碑區塊缺失導致 render() 報錯（stela 為 null）",
+      "通天碑顯示加入「樓層」分頁內，並對缺失元素做安全檢查"
+    ]
+  },
+  {
     "version": "v0.0.4-test",
     "date": "2026-01-07",
     "changes": [
