@@ -12,6 +12,7 @@
     <div class="title">《傲慢之塔》Web（GitHub Pages 版）</div>
     <div class="row" style="justify-content:flex-end; gap:10px;">
   <div id="versionTag" class="pill mono"></div>
+  <button id="settingsBtn" class="iconbtn" title="設定">⚙️</button>
   <div id="playerQuick"></div>
 </div>
   </header>
@@ -38,6 +39,8 @@
 
         <hr/>
         <div id="playerDetails"></div>
+        <hr/>
+        <div id="versionInfo" class="small"></div>
       </div>
 
       <div class="panel hidden" data-panel="bag">
@@ -68,5 +71,40 @@
 </main>
 
   <script type="module" src="./main.js"></script>
+
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="設定">
+    <div class="modalCard">
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">設定</h2>
+        <button id="settingsClose" class="iconbtn" title="關閉">✕</button>
+      </div>
+
+      <div class="small" style="margin-top:8px;">
+        這裡可以匯出/匯入「存檔 JSON」的 Base64 代碼。<br/>
+        注意：此操作會直接覆蓋目前存檔（localStorage）。
+      </div>
+
+      <hr/>
+      <div class="small">Base64 代碼</div>
+      <textarea id="saveCode" class="textarea" rows="6" placeholder="貼上 Base64 代碼…"></textarea>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="btnExport">匯出 Base64</button>
+        <button id="btnCopy" style="background:#334155;">複製</button>
+        <button id="btnImport" style="background:#16a34a;">匯入 Base64</button>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="btnDownloadJson" style="background:#0ea5e9;">下載 JSON</button>
+        <label class="iconbtn" style="padding:8px 12px; border-radius:12px;">
+          上傳 JSON
+          <input id="fileJson" type="file" accept="application/json" style="display:none;" />
+        </label>
+      </div>
+
+      <div id="settingsMsg" class="small" style="margin-top:10px; opacity:.9;"></div>
+    </div>
+  </div>
+
 </body>
 </html>

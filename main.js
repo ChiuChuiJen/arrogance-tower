@@ -1,4 +1,5 @@
 import { APP_VERSION } from "./data/version.js";
+import { CHANGELOG } from "./data/changelog.js";
 import { Floors } from "./data/floors.js";
 import { Monsters } from "./data/monsters.js";
 import { Items } from "./data/items.js";
@@ -250,6 +251,8 @@ function render() {
   renderPlayerDetails();
   setupTabs();
   hookBreakthrough();
+  renderVersionInfo();
+  setupSettings();
 }
 
 function tokenIdForNext(floorId){
@@ -518,6 +521,119 @@ function hookBreakthrough(){
     S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
     saveGame(S);
     render();
+  };
+}
+
+
+function encodeB64(obj){
+  const json = JSON.stringify(obj);
+  // UTF-8 safe base64
+  const bytes = new TextEncoder().encode(json);
+  let bin = "";
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+function decodeB64(b64){
+  const bin = atob(b64.trim());
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  const json = new TextDecoder().decode(bytes);
+  return JSON.parse(json);
+}
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+}
+function renderVersionInfo(){
+  const el = document.getElementById("versionInfo");
+  if (!el) return;
+  const items = (CHANGELOG ?? []).slice(-6).reverse();
+  const html = items.map(x => {
+    const lines = (x.changes ?? []).map(c => `• ${escapeHtml(c)}`).join("<br/>");
+    return `<div style="margin:8px 0;">
+      <div class="mono" style="opacity:.9;">${escapeHtml(x.version)} <span style="opacity:.7;">(${escapeHtml(x.date)})</span></div>
+      <div>${lines}</div>
+    </div>`;
+  }).join("");
+  el.innerHTML = `<div class="mono">版本：${escapeHtml(APP_VERSION)}</div>` + (html ? `<div style="margin-top:6px;">更動內容：</div>${html}` : "");
+}
+function setupSettings(){
+  const modal = document.getElementById("settingsModal");
+  const btn = document.getElementById("settingsBtn");
+  const close = document.getElementById("settingsClose");
+  const msg = document.getElementById("settingsMsg");
+  const ta = document.getElementById("saveCode");
+  const btnExport = document.getElementById("btnExport");
+  const btnCopy = document.getElementById("btnCopy");
+  const btnImport = document.getElementById("btnImport");
+  const btnDownload = document.getElementById("btnDownloadJson");
+  const fileJson = document.getElementById("fileJson");
+
+  if (!modal || !btn || !close) return;
+
+  const open = () => { modal.classList.remove("hidden"); msg.textContent = ""; };
+  const shut = () => { modal.classList.add("hidden"); msg.textContent = ""; };
+
+  btn.onclick = open;
+  close.onclick = shut;
+  modal.onclick = (e) => { if (e.target === modal) shut(); };
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") shut(); });
+
+  if (btnExport) btnExport.onclick = () => {
+    if (!S) { msg.textContent = "目前尚未建立角色，無可匯出存檔。"; return; }
+    ta.value = encodeB64(S);
+    msg.textContent = "已產生 Base64 代碼。";
+  };
+
+  if (btnCopy) btnCopy.onclick = async () => {
+    try{
+      await navigator.clipboard.writeText(ta.value || "");
+      msg.textContent = "已複製到剪貼簿。";
+    } catch {
+      msg.textContent = "複製失敗（瀏覽器限制）。你可以手動全選複製。";
+    }
+  };
+
+  if (btnImport) btnImport.onclick = () => {
+    try{
+      const obj = decodeB64(ta.value || "");
+      // Basic validation
+      if (!obj || !obj.memberId || !obj.nickname) throw new Error("存檔格式不正確");
+      saveGame(obj);
+      S = obj;
+      msg.textContent = "匯入成功，已套用存檔。";
+      render();
+    } catch (err){
+      msg.textContent = "匯入失敗：Base64 或 JSON 格式不正確。";
+    }
+  };
+
+  if (btnDownload) btnDownload.onclick = () => {
+    if (!S) { msg.textContent = "目前尚未建立角色，無可下載存檔。"; return; }
+    downloadText(`AT_SAVE_${APP_VERSION}.json`, JSON.stringify(S, null, 2));
+    msg.textContent = "已開始下載 JSON。";
+  };
+
+  if (fileJson) fileJson.onchange = async () => {
+    const f = fileJson.files?.[0];
+    if (!f) return;
+    try{
+      const text = await f.text();
+      const obj = JSON.parse(text);
+      if (!obj || !obj.memberId || !obj.nickname) throw new Error("bad");
+      saveGame(obj);
+      S = obj;
+      ta.value = encodeB64(obj);
+      msg.textContent = "上傳並匯入成功，已套用存檔。";
+      render();
+    } catch {
+      msg.textContent = "上傳失敗：JSON 格式不正確。";
+    } finally {
+      fileJson.value = "";
+    }
   };
 }
 
