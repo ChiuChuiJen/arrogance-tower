@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>傲慢之塔 Web</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="bar">
+    <div class="title">《傲慢之塔》Web（GitHub Pages 版）</div>
+    <div id="playerQuick"></div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>角色</h2>
+      <div id="auth"></div>
+      <div class="row">
+        <label class="chk">
+          <input id="badge" type="checkbox" />
+          配戴「百納袋胸章」
+        </label>
+      </div>
+      <div class="small">未配戴者：擊殺不會獲得任何掉落（Canon）</div>
+    </section>
+
+    <section class="card">
+      <h2>樓層</h2>
+      <div id="floors"></div>
+      <hr/>
+      <div id="stela"></div>
+    </section>
+
+    <section class="card">
+      <h2>狩獵</h2>
+      <div id="hunt"></div>
+    </section>
+
+    <section class="card">
+      <h2>背包（百納袋）</h2>
+      <div id="bag"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
