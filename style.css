@@ -122,3 +122,15 @@ input {
 .barfill.sta { background:#f97316; }
 
 .barfill.exp { background:#a855f7; }
+
+
+select.select{
+  background:#0b0f14;
+  border:1px solid #1f2a36;
+  color:#e8eef6;
+  padding:10px 12px;
+  border-radius:12px;
+  width: 100%;
+  max-width: 420px;
+}
+.sub{ margin: 0 0 8px 0; font-size: 14px; opacity:.95; }

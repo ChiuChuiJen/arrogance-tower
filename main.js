@@ -154,7 +154,8 @@ function render() {
       </div>
       <div class="small">存檔在本機 localStorage（GitHub Pages 可用）</div>
     `;
-    $("floors").innerHTML = "";
+    const sel0 = document.getElementById("floorSelect"); if (sel0) sel0.innerHTML = "";
+    const hint0 = document.getElementById("floorHint"); if (hint0) hint0.textContent = "";
     $("stela").innerHTML = "";
     $("hunt").innerHTML = "";
     $("bag").innerHTML = "";
@@ -216,25 +217,28 @@ function render() {
     render();
   };
 
-  // Floors list
-  $("floors").innerHTML = Floors.map(f => {
-    const locked = f.id > S.unlockedFloor;
-    const active = f.id === (S.currentFloor ?? 1);
-    return `<div class="row" style="margin:6px 0;">
-      <span class="pill">${active ? "▶" : ""}${f.name}</span>
-      <span class="pill">屬性：${f.element}</span>
-      <button ${locked ? "disabled" : ""} data-floor="${f.id}">進入</button>
-    </div>`;
-  }).join("");
-
-  [...$("floors").querySelectorAll("button[data-floor]")].forEach(btn => {
-    btn.onclick = () => {
-      const fid = Number(btn.dataset.floor);
+  // Floors (dropdown)
+  const sel = document.getElementById("floorSelect");
+  const hint = document.getElementById("floorHint");
+  if (sel) {
+    const unlocked = Floors.filter(f => f.id <= S.unlockedFloor);
+    sel.innerHTML = unlocked.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
+    sel.value = String(S.currentFloor ?? 1);
+    sel.onchange = () => {
+      const fid = Number(sel.value);
       S.currentFloor = fid;
       pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
       saveGame(S);
       renderHunt();
       renderStela();
+      renderHistory();
+      renderPlayerDetails();
+      hookBreakthrough();
+    };
+    if (hint) hint.textContent = `已解鎖至第 ${S.unlockedFloor} 層。`;
+  }
+
+  renderStela();
       renderHistory();
     };
   });
