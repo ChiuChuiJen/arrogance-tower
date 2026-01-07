@@ -120,3 +120,5 @@ input {
 .barfill { height:100%; width:0%; background:#16a34a; }
 .barfill.mp { background:#0ea5e9; }
 .barfill.sta { background:#f97316; }
+
+.barfill.exp { background:#a855f7; }

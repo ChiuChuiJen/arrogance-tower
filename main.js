@@ -9,6 +9,24 @@ import { fightSim } from "./lib/combat.js";
 let S = loadSave();
 const $ = (id) => document.getElementById(id);
 
+
+const REALMS = ["凡人","鍛體","通脈","凝元","築基","金丹","元嬰","化神","合道","飛升"];
+const TIER_NAMES = ["一重","二重","三重","四重","五重","六重","七重","八重","九重","十重"];
+
+function syncRealmTier(){
+  if (!S) return;
+  const ri = S.realmIndex ?? 0;
+  const tn = S.tierNum ?? 1;
+  S.realm = REALMS[Math.max(0, Math.min(REALMS.length-1, ri))];
+  S.tier = TIER_NAMES[Math.max(1, Math.min(10, tn)) - 1];
+}
+
+function expNeedFor(ri, tn){
+  // 可調整的簡易需求公式（越高境界/層級越高）
+  const base = 60;
+  return Math.floor(base * (1 + ri*0.65) * (1 + (tn-1)*0.20));
+}
+
 function itemName(id){ return Items[id]?.name ?? id; }
 
 function addItems(toBag, items){
@@ -92,6 +110,13 @@ function renderPlayerDetails(){
       </div>
 
       <div class="kv">
+        <span class="label">修為(EXP)</span>
+        <span class="value">${S.exp} / ${S.expNeed}</span>
+        <div class="barwrap"><div class="barfill exp" style="width:${pct(S.exp, S.expNeed)}%;"></div></div>
+        <button id="breakBtn" ${S.exp >= S.expNeed ? "" : "disabled"} style="background:#a855f7;">突破</button>
+      </div>
+
+      <div class="kv">
         <span class="label">體力</span>
         <span class="value">${S.stamina} / ${S.maxStamina}</span>
         <div class="barwrap"><div class="barfill sta" style="width:${stPct}%;"></div></div>
@@ -154,8 +179,11 @@ function render() {
   if (S.maxStamina == null) S.maxStamina = 10;
   if (S.maxHp == null) S.maxHp = S.hp ?? 120;
   if (S.maxMp == null) S.maxMp = S.mp ?? 60;
-  if (S.realm == null) S.realm = "凡人";
-  if (S.tier == null) S.tier = "一重";
+  if (S.realmIndex == null) S.realmIndex = 0;
+  if (S.tierNum == null) S.tierNum = 1;
+  if (S.exp == null) S.exp = 0;
+  if (S.expNeed == null) S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
+  syncRealmTier();
   ensureHistory();
 
   $("auth").innerHTML = `
@@ -217,6 +245,7 @@ function render() {
   renderHistory();
   renderPlayerDetails();
   setupTabs();
+  hookBreakthrough();
 }
 
 function tokenIdForNext(floorId){
@@ -370,6 +399,11 @@ function doFight(monsterId) {
     return;
   }
 
+  // 勝利：修為（EXP）
+  const expGain = ({ "一般": 12, "菁英": 28, "Mini Boss": 55, "Boss": 90 }[m.rarity] ?? 10) + Math.floor(Math.random()*6);
+  S.exp += expGain;
+  S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
+
   // 勝利：掉落
   const drop = rollDrops({ floorId: S.currentFloor, rarity: m.rarity, badgeOn: S.badgeOn });
   S.gold += drop.gold;
@@ -388,7 +422,7 @@ function doFight(monsterId) {
     ? `獲得 金幣+${drop.gold}` + (gotItems ? `；掉落：${gotItems}` : "")
     : "未配戴百納袋胸章，因此未獲得任何掉落。";
 
-  pushHistory("combat", `你擊敗了「${m.name}」。${dropMsg}`, { monsterId, gold: drop.gold, items: drop.items });
+  pushHistory("combat", `你擊敗了「${m.name}」。修為 +${expGain}；${dropMsg}`, { monsterId, gold: drop.gold, items: drop.items });
 
   saveGame(S);
   render();
@@ -451,6 +485,36 @@ function renderHistory(){
     </div>`;
   }).join("");
   el.innerHTML = items || `<div class="small">尚無歷程。</div>`;
+}
+
+
+function hookBreakthrough(){
+  const btn = document.getElementById("breakBtn");
+  if (!btn) return;
+  btn.onclick = () => {
+    if (!S || S.exp < S.expNeed) return;
+
+    S.exp -= S.expNeed;
+
+    if ((S.tierNum ?? 1) < 10) {
+      S.tierNum += 1;
+      syncRealmTier();
+      pushHistory("system", `你突破成功：境界維持「${S.realm}」，層級提升至「${S.tier}」。`, { realm: S.realm, tier: S.tier });
+    } else {
+      S.tierNum = 1;
+      S.realmIndex = Math.min((S.realmIndex ?? 0) + 1, REALMS.length - 1);
+      syncRealmTier();
+      pushHistory("system", `你突破大境界：提升至「${S.realm}」，層級重置為「${S.tier}」。`, { realm: S.realm, tier: S.tier });
+      S.maxHp += 15;
+      S.maxMp += 8;
+      S.hp = S.maxHp;
+      S.mp = S.maxMp;
+    }
+
+    S.expNeed = expNeedFor(S.realmIndex, S.tierNum);
+    saveGame(S);
+    render();
+  };
 }
 
 function escapeHtml(s){
