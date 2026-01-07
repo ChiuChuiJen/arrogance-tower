@@ -10,6 +10,20 @@ import { fightSim } from "./lib/combat.js";
 let S = loadSave();
 const $ = (id) => document.getElementById(id);
 
+const REALMS = ["凡人","鍛體","通脈","凝元","築基","金丹","元嬰","化神","合道","飛升"];
+const TIER_NAMES = ["一重","二重","三重","四重","五重","六重","七重","八重","九重","十重"];
+function syncRealmTier(){
+  if (!S) return;
+  const ri = S.realmIndex ?? 0;
+  const tn = S.tierNum ?? 1;
+  S.realm = REALMS[Math.max(0, Math.min(REALMS.length-1, ri))];
+  S.tier = TIER_NAMES[Math.max(1, Math.min(10, tn)) - 1];
+}
+function exeNeedFor(ri, tn){
+  const base = 100;
+  return Math.floor(base * (1 + ri*0.70) * (1 + (tn-1)*0.22));
+}
+
 function itemName(id){ return Items[id]?.name ?? id; }
 
 function addItems(toBag, items){
@@ -90,6 +104,13 @@ function renderPlayerDetails(){
         <span class="label">MP</span>
         <span class="value">${S.mp} / ${S.maxMp}</span>
         <div class="barwrap"><div class="barfill mp" style="width:${mpPct}%;"></div></div>
+      </div>
+
+      <div class="kv">
+        <span class="label">修為值(EXE)</span>
+        <span class="value">${S.exe ?? 0} / ${S.exeNeed ?? 100}</span>
+        <div class="barwrap"><div class="barfill exp" style="width:${pct(S.exe ?? 0, S.exeNeed ?? 100)}%;"></div></div>
+        <button id="exeBreakBtn" ${(S.exe ?? 0) >= (S.exeNeed ?? 100) ? "" : "disabled"} style="background:#a855f7;">突破</button>
       </div>
 
       <div class="kv">
@@ -189,25 +210,30 @@ function render() {
     render();
   };
 
-  // Floors list
-  $("floors").innerHTML = Floors.map(f => {
-    const locked = f.id > S.unlockedFloor;
-    const active = f.id === (S.currentFloor ?? 1);
-    return `<div class="row" style="margin:6px 0;">
-      <span class="pill">${active ? "▶" : ""}${f.name}</span>
-      <span class="pill">屬性：${f.element}</span>
-      <button ${locked ? "disabled" : ""} data-floor="${f.id}">進入</button>
-    </div>`;
-  }).join("");
-
-  [...$("floors").querySelectorAll("button[data-floor]")].forEach(btn => {
-    btn.onclick = () => {
-      const fid = Number(btn.dataset.floor);
+  // Floor selector (dropdown)
+  const sel = document.getElementById("floorSelect");
+  const hint = document.getElementById("floorHint");
+  if (sel) {
+    const unlocked = Floors.filter(f => f.id <= S.unlockedFloor);
+    sel.innerHTML = unlocked.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
+    sel.value = String(S.currentFloor ?? 1);
+    sel.onchange = () => {
+      const fid = Number(sel.value);
       S.currentFloor = fid;
       pushHistory("system", `你進入了 ${Floors.find(x=>x.id===fid)?.name ?? ("第"+fid+"層")}。`, { floorId: fid });
       saveGame(S);
-      renderHunt();
       renderStela();
+      renderHunt();
+      renderHistory();
+      renderPlayerDetails();
+  hookExeBreakthrough();
+      renderExeInfo();
+      hookBreakthrough?.();
+    };
+    if (hint) hint.textContent = `已解鎖至第 ${S.unlockedFloor} 層。`;
+  }
+
+  renderStela();
       renderHistory();
     };
   });
@@ -217,6 +243,7 @@ function render() {
   renderBag();
   renderHistory();
   renderPlayerDetails();
+  hookExeBreakthrough();
   setupTabs();
   renderVersionInfo();
   setupSettings();
@@ -373,6 +400,10 @@ function doFight(monsterId) {
     return;
   }
 
+  // 勝利：修為值(EXE)
+  const exeGain = ({ "一般": 8, "菁英": 18, "Mini Boss": 35, "Boss": 60 }[m.rarity] ?? 6) + Math.floor(Math.random()*4);
+  S.exe = (S.exe ?? 0) + exeGain;
+  
   // 勝利：掉落
   const drop = rollDrops({ floorId: S.currentFloor, rarity: m.rarity, badgeOn: S.badgeOn });
   S.gold += drop.gold;
@@ -391,7 +422,7 @@ function doFight(monsterId) {
     ? `獲得 金幣+${drop.gold}` + (gotItems ? `；掉落：${gotItems}` : "")
     : "未配戴百納袋胸章，因此未獲得任何掉落。";
 
-  pushHistory("combat", `你擊敗了「${m.name}」。${dropMsg}`, { monsterId, gold: drop.gold, items: drop.items });
+  pushHistory("combat", `你擊敗了「${m.name}」。修為值(EXE) +${exeGain}；${dropMsg}`, { monsterId, gold: drop.gold, items: drop.items });
 
   saveGame(S);
   render();
@@ -565,6 +596,41 @@ function setupSettings(){
       fileJson.value = "";
     }
   };
+}
+
+
+function hookExeBreakthrough(){
+  const btn = document.getElementById("exeBreakBtn");
+  if (!btn) return;
+  btn.onclick = () => {
+    if (!S) return;
+    const need = exeNeedFor(S.realmIndex ?? 0, S.tierNum ?? 1);
+    if ((S.exe ?? 0) < need) return;
+
+    S.exe -= need;
+
+    if ((S.tierNum ?? 1) < 10) {
+      S.tierNum += 1;
+      syncRealmTier();
+      pushHistory("system", `你突破成功：境界維持「${S.realm}」，層級提升至「${S.tier}」。`, { realm: S.realm, tier: S.tier });
+    } else {
+      S.tierNum = 1;
+      S.realmIndex = Math.min((S.realmIndex ?? 0) + 1, REALMS.length - 1);
+      syncRealmTier();
+      pushHistory("system", `你突破大境界：提升至「${S.realm}」，層級重置為「${S.tier}」。`, { realm: S.realm, tier: S.tier });
+      S.maxHp = (S.maxHp ?? S.hp ?? 120) + 15;
+      S.maxMp = (S.maxMp ?? S.mp ?? 60) + 8;
+      S.hp = S.maxHp;
+      S.mp = S.maxMp;
+    }
+
+    S.exeNeed = exeNeedFor(S.realmIndex, S.tierNum);
+    saveGame(S);
+    render();
+  };
+}
+function renderExeInfo(){
+  // placeholder for future expansions; kept for dropdown onchange calls
 }
 
 function escapeHtml(s){

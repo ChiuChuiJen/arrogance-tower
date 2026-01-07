@@ -165,3 +165,20 @@ input {
   padding:14px;
   box-shadow: 0 12px 40px rgba(0,0,0,.4);
 }
+
+
+/* 歷程滾動（超過 10 筆時由 JS 套用 .scrollbox） */
+#history.scrollbox{
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+select.select{
+  background:#0b0f14;
+  border:1px solid #1f2a36;
+  color:#e8eef6;
+  padding:10px 12px;
+  border-radius:12px;
+  width: 100%;
+  max-width: 420px;
+}
